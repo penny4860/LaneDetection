@@ -25,7 +25,7 @@ class DistortionCorrector(object):
     def _get_img_points(self, images, n_pattern_rows, n_pattern_cols):
         """
         # Returns
-            points : ndarray, shape of (n_images, n_pattern_rows*n_pattern_cols, 3)
+            points : 4d array, shape of (n_images, n_pattern_rows*n_pattern_cols, 1, 2)
                 2d-image coordinate points
         """
 
@@ -41,21 +41,28 @@ class DistortionCorrector(object):
             if ret == True:
                 imgpoints.append(corners)
                 
-        return imgpoints
+        return np.array(imgpoints)
     
     def _get_obj_points(self, n_images, n_pattern_rows, n_pattern_cols):
         """
         # Returns
-            points : ndarray, shape of (n_images, n_pattern_rows*n_pattern_cols, 3)
+            points : 3d array, shape of (n_images, n_pattern_rows*n_pattern_cols, 3)
                 3d-world coordinate points
         """
         point = np.zeros((n_pattern_rows*n_pattern_cols,3), np.float32)
         point[:,:2] = np.mgrid[0:n_pattern_cols, 0:n_pattern_rows].T.reshape(-1,2)
     
         points = [point for _ in range(n_images)]
-        return points
+        return np.array(points)
     
     def run(self, image):
+        """
+        # Args
+            image : array
+            
+        # Returns
+            dst : array
+        """
         img_size = (image.shape[1], image.shape[0]) # (w, h)
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self._obj_points, self._img_points, img_size, None, None)
         
@@ -64,23 +71,36 @@ class DistortionCorrector(object):
         else:
             raise Exception('fail to distortion correction!')
         return dst
+    
+    def to_pkl(self, filename):
+        import pickle
+        with open(filename, 'wb') as f:
+            pickle.dump(self, f)
+        
+    @classmethod
+    def from_pkl(cls, filename):
+        import pickle
+        with open(filename, 'rb') as f:
+            instance = pickle.load(f)
+        return instance
+        
+if __name__ == "__main__":
+    
+    # 1. Get images in gray scale
+    files = glob.glob('camera_cal/*.jpg')
+    images = [cv2.cvtColor(cv2.imread(image_file), cv2.COLOR_BGR2GRAY) for image_file in files]
 
-
-# Make a list of calibration images
-files = glob.glob('camera_cal/*.jpg')
-images = [cv2.cvtColor(cv2.imread(image_file), cv2.COLOR_BGR2GRAY) for image_file in files]
-
-corrector = DistortionCorrector(images, n_pattern_rows=6, n_pattern_cols=9)
-
-# 3. Do calibration for test image size
-img = cv2.imread('camera_cal/calibration1.jpg')
-dst = corrector.run(img)
-
-# Visualize undistortion
-f, (ax1, ax2) = plt.subplots(1, 2, figsize=(20,10))
-ax1.imshow(img)
-ax1.set_title('Original Image', fontsize=30)
-ax2.imshow(dst)
-ax2.set_title('Undistorted Image', fontsize=30)
-plt.show()
+    # 2. Build distortion corrector instance    
+    corrector = DistortionCorrector(images, n_pattern_rows=6, n_pattern_cols=9)
+    corrector.to_pkl("distortion_corrector.pkl")
+    
+    # 3. Run correction & visualize the result
+    img = cv2.imread('camera_cal/calibration1.jpg')
+    dst = corrector.run(img)
+    f, (ax1, ax2) = plt.subplots(1, 2, figsize=(20,10))
+    ax1.imshow(img)
+    ax1.set_title('Original Image', fontsize=30)
+    ax2.imshow(dst)
+    ax2.set_title('Undistorted Image', fontsize=30)
+    plt.show()
 
