@@ -73,13 +73,11 @@ class DistortionCorrector(object):
         return dst
     
     def to_pkl(self, filename):
-        import pickle
         with open(filename, 'wb') as f:
             pickle.dump(self, f)
         
     @classmethod
     def from_pkl(cls, filename):
-        import pickle
         with open(filename, 'rb') as f:
             instance = pickle.load(f)
         return instance
