@@ -45,6 +45,15 @@ def gradient_threshold(image, thresh):
     binary[(scaled_sobel >= thresh[0]) & (scaled_sobel <= thresh[1])] = 1
     return binary
 
+def denoising(image, ksize=[3,3]):
+    """
+    # Args
+        image : 2d array
+            binary image
+    """
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+    denoised = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+    return denoised
 
 # 1. Distortion Correction
 corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
