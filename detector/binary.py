@@ -4,9 +4,20 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
+def _to_uint8_scale(image):
+    # Scale to 8-bit (0 - 255) then convert to type = np.uint8
+    image = np.uint8(255*image/np.max(image))
+    return image
+
+def _to_binaray(image, threshold=(0, 255)):
+    binary = np.zeros_like(image)
+    binary[(image > threshold[0]) & (image <= threshold[1])] = 1
+    return binary
+
 
 class Binarizer(object):
     
+
     @staticmethod
     def intensity(image, thresh):
         """
@@ -20,8 +31,7 @@ class Binarizer(object):
         # Note: img is the undistorted image
         hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
         s_channel = hls[:,:,2]
-        binary = np.zeros_like(s_channel)
-        binary[(s_channel > thresh[0]) & (s_channel <= thresh[1])] = 1
+        binary = _to_binaray(s_channel, thresh)
         return binary
 
     @staticmethod
@@ -30,15 +40,11 @@ class Binarizer(object):
         
         # 2) Take the derivative in x or y given orient = 'x' or 'y'
         sobel = cv2.Sobel(gray, cv2.CV_64F, 1, 0)
-    
-        # Scale to 8-bit (0 - 255) then convert to type = np.uint8
         sobel = np.absolute(sobel)
-        sobel = np.uint8(255*sobel/np.max(sobel))
+        sobel = _to_uint8_scale(sobel)
         
-        # Create a mask of 1's where the scaled gradient magnitude 
-        binary_output = np.zeros_like(sobel)
-        binary_output[(sobel > thresh[0]) & (sobel < thresh[1])] = 1
-        return binary_output
+        binary = _to_binaray(sobel, thresh)
+        return binary
 
     @staticmethod
     def gradient_y(img, thresh=(0, 255)):
@@ -46,18 +52,14 @@ class Binarizer(object):
         
         # 2) Take the derivative in x or y given orient = 'x' or 'y'
         sobel = cv2.Sobel(gray, cv2.CV_64F, 0, 1)
-    
-        # Scale to 8-bit (0 - 255) then convert to type = np.uint8
         sobel = np.absolute(sobel)
-        sobel = np.uint8(255*sobel/np.max(sobel))
-        
-        # Create a mask of 1's where the scaled gradient magnitude 
-        binary_output = np.zeros_like(sobel)
-        binary_output[(sobel > thresh[0]) & (sobel < thresh[1])] = 1
-        return binary_output
+        sobel = _to_uint8_scale(sobel)
+
+        binary = _to_binaray(sobel, thresh)
+        return binary
 
     @staticmethod
-    def gradient_magnitude(img, mag_thresh=(0, 255), sobel_kernel=3):
+    def gradient_magnitude(img, thresh=(0, 255), sobel_kernel=3):
         
         # 1) Convert to grayscale
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
@@ -68,37 +70,26 @@ class Binarizer(object):
     
         # 3) Calculate the magnitude 
         sobel = np.sqrt(sobelx**2 + sobely**2)
+        sobel = _to_uint8_scale(sobel)
+
+        binary = _to_binaray(sobel, thresh)
         
-        # 4) Scale to 8-bit (0 - 255) and convert to type = np.uint8
-        sobel = np.uint8(255*sobel/np.max(sobel))
-        
-        # 5) Create a binary mask where mag thresholds are met
-        binary_output = np.zeros_like(sobel)
-        binary_output[(sobel > mag_thresh[0]) & (sobel < mag_thresh[1])] = 1
-        
-        # 6) Return this mask as your binary_output image
-        return binary_output
+        return binary
 
     @staticmethod
     def gradient_direction(img, thresh=(0, np.pi/2), sobel_kernel=3):
         
-        # Apply the following steps to img
-        # 1) Convert to grayscale
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
-        # 2) Take the gradient in x and y separately
+
         sobelx = cv2.Sobel(gray, cv2.CV_64F, 1, 0, ksize=sobel_kernel)
-        sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)
-        # 3) Take the absolute value of the x and y gradients
         sobelx = np.absolute(sobelx)
+
+        sobely = cv2.Sobel(gray, cv2.CV_64F, 0, 1, ksize=sobel_kernel)
         sobely = np.absolute(sobely)
-        # 4) Use np.arctan2(abs_sobely, abs_sobelx) to calculate the direction of the gradient 
+
         sobel = np.arctan2(sobely, sobelx)
-        # 5) Create a binary mask where direction thresholds are met
-        binary_output = np.zeros_like(sobel)
-        binary_output[(sobel > thresh[0]) & (sobel < thresh[1])] = 1
-    
-        # 6) Return this mask as your binary_output image
-        return binary_output
+        binary = _to_binaray(sobel, thresh)
+        return binary
     
     
 def denoising(image, ksize=[3,3]):
