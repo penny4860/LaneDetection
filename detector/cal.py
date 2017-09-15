@@ -67,7 +67,7 @@ class DistortionCorrector(object):
         ret, mtx, dist, rvecs, tvecs = cv2.calibrateCamera(self._obj_points, self._img_points, img_size, None, None)
         
         if ret:
-            dst = cv2.undistort(img, mtx, dist, None, mtx)
+            dst = cv2.undistort(image, mtx, dist, None, mtx)
         else:
             raise Exception('fail to distortion correction!')
         return dst
