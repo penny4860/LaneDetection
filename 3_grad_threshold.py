@@ -82,10 +82,12 @@ img = corrector.run(img)
 gx = abs_sobel_thresh(img, 'x', (10, 255))
 gy = abs_sobel_thresh(img, 'y', (10, 255))
 mag = mag_thresh(img, 3, (30, 255))
-dir = dir_threshold(img, 15, (0.7, 1.3))
+dir = dir_threshold(img, 9, (0.7, 1.3))
 
-plot_images([img, gx, gy, mag, dir],
-            ["original", "gx", "gy", "mag", "dir"])
+output = np.zeros_like(gx)
+output[(gx == 1) & (dir == 1)] = 1
 
+plot_images([img, gx, dir, output],
+            ["original", "gx", "dir", "combined"])
 
 
