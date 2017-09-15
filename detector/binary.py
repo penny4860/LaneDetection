@@ -92,7 +92,7 @@ class Binarizer(object):
         return binary
     
     
-def denoising(image, ksize=[3,3]):
+def image_opening(image, ksize=[3,3]):
     """
     # Args
         image : 2d array
