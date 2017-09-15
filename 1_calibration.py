@@ -93,7 +93,9 @@ if __name__ == "__main__":
     corrector.to_pkl("distortion_corrector.pkl")
     
     # 3. Run correction & visualize the result
-    img = cv2.imread('camera_cal/calibration1.jpg')
+    # img = cv2.imread('camera_cal/calibration1.jpg')
+    img = plt.imread("test_images/straight_lines1.jpg")
+
     dst = corrector.run(img)
     f, (ax1, ax2) = plt.subplots(1, 2, figsize=(20,10))
     ax1.imshow(img)
