@@ -4,52 +4,29 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 from detector.cal import DistortionCorrector
+from detector.binary import Binarizer, plot_images
 
-def denoising(image, ksize=[3,3]):
-    """
-    # Args
-        image : 2d array
-            binary image
-    """
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
-    denoised = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
-    return denoised
-
-def plot_images(images, titles=None):
-    _, axes = plt.subplots(1, len(images), figsize=(20,10))
+if __name__ == "__main__":
+    # 1. Distortion Correction
+    corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
+    img = plt.imread('test_images/straight_lines1.jpg')
+    img = corrector.run(img)
     
-    for img, ax, text in zip(images, axes, titles):
-        ax.imshow(img, cmap="gray")
-        ax.set_title(text, fontsize=30)
-    plt.show()
+    intensity_bin = Binarizer.intensity(img, (112, 255))
+    
+    plot_images([img, intensity_bin],
+                ["original", "s-channel"])
 
+    gx_bin = Binarizer.gradient_x(img, (10, 255))
+    gy_bin = Binarizer.gradient_y(img, (10, 255))
+    grad_mag_bin = Binarizer.gradient_magnitude(img, (30, 255))
+    grad_dir_bin = Binarizer.gradient_direction(img, (0.7, 1.3))
 
-def intensity_threshold(image, thresh):
-    """
-    # Args
-        image : 3d array
-            RGB ordered image tensor
-        thresh : tuple
-            (minimun threshold, maximum threshold)
-    """
-    # Convert to HLS color space and separate the S channel
-    # Note: img is the undistorted image
-    hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
-    s_channel = hls[:,:,2]
-    binary = np.zeros_like(s_channel)
-    binary[(s_channel > thresh[0]) & (s_channel <= thresh[1])] = 1
-    return binary
+    plot_images([img, gx_bin, grad_mag_bin, grad_dir_bin],
+                ["original", "gx", "mag", "thera"])
 
-
-# 1. Distortion Correction
-corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
-img = plt.imread('test_images/straight_lines1.jpg')
-img = corrector.run(img)
-
-intensity_binary = intensity_threshold(img, (112, 255))
-
-plot_images([img, intensity_binary],
-            ["original", "s-channel"])
-
-
-
+    output = np.zeros_like(gx_bin)
+    output[(gx_bin == 1) & (grad_dir_bin == 1)] = 1
+     
+    plot_images([img, output],
+                ["original", "combined"])
