@@ -7,6 +7,13 @@ from detector.warp import PerspectTrans
 import cv2
 
 # test5.jpg
+import numpy as np
+np.set_printoptions(linewidth=1000, edgeitems=1000)
+
+def get_roi(image):
+    # bottom half of the image
+    return image[image.shape[0]//2:,:]
+
 
 if __name__ == "__main__":
     # 1. Distortion Correction
@@ -24,11 +31,12 @@ if __name__ == "__main__":
     plot_images([img, denoised, binary_warped],
                 ["original", "thresholded + opening", "warped"])
 
-    import numpy as np
-    
     # Assuming you have created a warped binary image called "binary_warped"
     # Take a histogram of the bottom half of the image
-    histogram = np.sum(binary_warped[binary_warped.shape[0]//2:,:], axis=0)
+    roi = get_roi(binary_warped)
+    histogram = np.sum(roi, axis=0)
+    print(histogram.shape)
+    
     # Create an output image to draw on and  visualize the result
     out_img = np.dstack((binary_warped, binary_warped, binary_warped))*255
     # Find the peak of the left and right halves of the histogram
