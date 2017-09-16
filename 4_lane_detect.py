@@ -19,7 +19,12 @@ def get_base(histogram):
     leftx_base = np.argmax(histogram[:midpoint])
     rightx_base = np.argmax(histogram[midpoint:]) + midpoint
     return leftx_base, rightx_base
-    
+
+def add_square_feature(X):
+    X = np.concatenate([(X**2).reshape(-1,1), X.reshape(-1,1)], axis=1)
+    return X
+
+
 if __name__ == "__main__":
     # 1. Distortion Correction
     corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
@@ -103,7 +108,14 @@ if __name__ == "__main__":
     
     # Fit a second order polynomial to each
     left_fit = np.polyfit(lefty, leftx, 2)
-    right_fit = np.polyfit(righty, rightx, 2)
+    # right_fit = np.polyfit(righty, rightx, 2)
+    
+    from sklearn import linear_model
+    ransac = linear_model.RANSACRegressor()
+    ransac.fit(add_square_feature(righty), rightx)
+    
+    right_fit = ransac.estimator_.coef_.tolist()
+    right_fit.append(ransac.estimator_.intercept_)
 
     # Generate x and y values for plotting
     ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
