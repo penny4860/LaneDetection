@@ -14,7 +14,12 @@ def get_roi(image):
     # bottom half of the image
     return image[image.shape[0]//2:,:]
 
-
+def get_base(histogram):
+    midpoint = np.int(histogram.shape[0]/2)
+    leftx_base = np.argmax(histogram[:midpoint])
+    rightx_base = np.argmax(histogram[midpoint:]) + midpoint
+    return leftx_base, rightx_base
+    
 if __name__ == "__main__":
     # 1. Distortion Correction
     corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
@@ -31,19 +36,13 @@ if __name__ == "__main__":
     plot_images([img, denoised, binary_warped],
                 ["original", "thresholded + opening", "warped"])
 
-    # Assuming you have created a warped binary image called "binary_warped"
-    # Take a histogram of the bottom half of the image
+    # 1. Create an output image to draw on and  visualize the result
+    out_img = np.dstack((binary_warped, binary_warped, binary_warped))*255
+
+    # 2. Get Histogram
     roi = get_roi(binary_warped)
     histogram = np.sum(roi, axis=0)
-    print(histogram.shape)
-    
-    # Create an output image to draw on and  visualize the result
-    out_img = np.dstack((binary_warped, binary_warped, binary_warped))*255
-    # Find the peak of the left and right halves of the histogram
-    # These will be the starting point for the left and right lines
-    midpoint = np.int(histogram.shape[0]/2)
-    leftx_base = np.argmax(histogram[:midpoint])
-    rightx_base = np.argmax(histogram[midpoint:]) + midpoint
+    leftx_base, rightx_base = get_base(histogram)
     
     # Choose the number of sliding windows
     nwindows = 9
