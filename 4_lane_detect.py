@@ -61,7 +61,7 @@ if __name__ == "__main__":
     leftx_current = leftx_base
     rightx_current = rightx_base
     # Set the width of the windows +/- margin
-    margin = 100
+    margin = 250
     # Set minimum number of pixels found to recenter window
     minpix = 50
     # Create empty lists to receive left and right lane pixel indices
