@@ -30,7 +30,7 @@ if __name__ == "__main__":
     corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
 
     # 2. Thresholding
-    img = plt.imread('test_images/test5.jpg')
+    img = plt.imread('test_images/test2.jpg')
     img = corrector.run(img)
     thd = thresholding(img, False)
     denoised = thresholding(img)
