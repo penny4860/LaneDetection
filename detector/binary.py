@@ -7,12 +7,11 @@ import matplotlib.pyplot as plt
 
 # Todo : 구조 정리
 def thresholding(image, do_opening=True):
-    intensity_bin = Binarizer.intensity(image, (112, 255))
-    gx_bin = Binarizer.gradient_x(image, (10, 255))
-    grad_dir_bin = Binarizer.gradient_direction(image, (0.7, 1.3))
+    intensity_bin = Binarizer.intensity(image, (96, 255))
+    gx_bin = Binarizer.gradient_x(image, (5, 255))
 
     output = np.zeros_like(gx_bin)
-    output[(gx_bin == 1) & (grad_dir_bin == 1) | (intensity_bin == 1)] = 1
+    output[(gx_bin == 1) & (intensity_bin == 1)] = 1
     if do_opening:
         output = image_opening(output)
     return output
