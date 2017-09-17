@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 # Todo : 구조 정리
-def thresholding(image, do_opening=True):
+def thresholding(image, do_opening=False, do_closing=True):
     intensity_bin = Binarizer.intensity(image, (96, 255))
     gx_bin = Binarizer.gradient_x(image, (5, 255))
 
@@ -14,6 +14,8 @@ def thresholding(image, do_opening=True):
     output[(gx_bin == 1) & (intensity_bin == 1)] = 1
     if do_opening:
         output = image_opening(output)
+    if do_closing:
+        output = image_closing(output)
     return output
 
 
@@ -106,14 +108,25 @@ class Binarizer(object):
         return binary
     
     
-def image_opening(image, ksize=[3,3]):
+def image_opening(image, ksize=(3,3)):
     """
     # Args
         image : 2d array
             binary image
     """
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, ksize)
     denoised = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
+    return denoised
+
+def image_closing(image, ksize=(7,7)):
+    """
+    # Args
+        image : 2d array
+            binary image
+    """
+    # kernel = np.ones(ksize, np.uint8)
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+    denoised = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
     return denoised
 
 def plot_images(images, titles=None):
