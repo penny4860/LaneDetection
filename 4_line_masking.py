@@ -74,14 +74,14 @@ def hough(binary, img):
         theta = _get_angle(x1, y1, x2, y2)
         
         if _which_side(x1, y1, x2, y2, binary.shape[1]) == "left":
-            if theta <= -30 and theta >= -90:
-                cv2.line(output, (x1, y1), (x2, y2), color=(255,0,0), thickness=10)
+            if theta <= -20 and theta >= -90:
+                cv2.line(output, (x1, y1), (x2, y2), color=(255,0,0), thickness=20)
                 # print("left", theta)
                 
         else:
-            if theta >= 30 and theta <= 90:
-                cv2.line(output, (x1, y1), (x2, y2), color=(0,0,255), thickness=10)
-                # print("right", theta)
+            print("right", theta)
+            if theta >= 20 and theta <= 90:
+                cv2.line(output, (x1, y1), (x2, y2), color=(0,0,255), thickness=20)
 
     return output
 
