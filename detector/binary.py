@@ -119,14 +119,14 @@ def image_opening(image, ksize=(3,3)):
     denoised = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
     return denoised
 
-def image_closing(image, ksize=(7,7)):
+def image_closing(image, ksize=(5,5)):
     """
     # Args
         image : 2d array
             binary image
     """
     # kernel = np.ones(ksize, np.uint8)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, ksize)
     denoised = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
     return denoised
 
