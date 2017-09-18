@@ -38,12 +38,12 @@ def hough(binary, img):
         
         if _which_side(x1, y1, x2, y2, binary.shape[1]) == "left":
             if theta <= -30 and theta >= -90:
-                cv2.line(img, (x1, y1), (x2, y2), color=(255,0,0), thickness=4)
+                cv2.line(img, (x1, y1), (x2, y2), color=(255,0,0), thickness=10)
                 # print("left", theta)
                 
         else:
             if theta >= 30 and theta <= 90:
-                cv2.line(img, (x1, y1), (x2, y2), color=(0,0,255), thickness=4)
+                cv2.line(img, (x1, y1), (x2, y2), color=(0,0,255), thickness=10)
                 # print("right", theta)
 
     return img
