@@ -9,10 +9,9 @@ import matplotlib.pyplot as plt
 def thresholding(image, do_opening=False, do_closing=False):
     intensity_bin = Binarizer.intensity(image, (96, 255))
     gx_bin = Binarizer.gradient_x(image, (5, 255))
-    gy_bin = Binarizer.gradient_y(image, (5, 255))
 
     output = np.zeros_like(gx_bin)
-    output[((gx_bin == 1) | (gy_bin == 1)) & (intensity_bin == 1)] = 255
+    output[(gx_bin == 1) & (intensity_bin == 1)] = 255
     if do_opening:
         output = image_opening(output)
     if do_closing:
