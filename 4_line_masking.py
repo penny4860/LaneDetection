@@ -24,7 +24,7 @@ def hough(binary, img):
         
     # Hough Transform
     minLineLength = 5
-    maxLineGap = 10
+    maxLineGap = 25
     lines = cv2.HoughLinesP(binary,
                             10,
                             np.pi/180,
@@ -54,12 +54,15 @@ if __name__ == "__main__":
 
     # 2. Thresholding
     # img = plt.imread('test_images/straight_lines1.jpg')
-    img = plt.imread('test_images/test1.jpg')
+    img = plt.imread('test_images/test4.jpg')
     original = img.copy()
     img = corrector.run(img)
     thd = thresholding(img)
+    
+    kernel = np.ones((3,3),np.uint8)
+    dialate = cv2.dilate(thd, kernel, iterations = 2)
 
-    img = hough(thd, img)
-    plot_images([original, thd, img],
-                ["original", "binary", "lines"])
+    img = hough(dialate, img)
+    plot_images([original, thd, dialate, img],
+                ["original", "binary", "dialate", "Hough"])
 
