@@ -57,12 +57,15 @@ def hough(binary, img):
             return "right"
         
     # Hough Transform
-    minLineLength = 5
+    minLineLength = 25
     maxLineGap = 25
+    n_lines_thd = 15
+    pixel_unit = 10
+    theta_unit = np.pi/180
     lines = cv2.HoughLinesP(binary,
-                            10,
-                            np.pi/180,
-                            25,
+                            pixel_unit,
+                            theta_unit,
+                            n_lines_thd,
                             np.array([]),
                             minLineLength=minLineLength,
                             maxLineGap=maxLineGap)
@@ -74,35 +77,42 @@ def hough(binary, img):
         theta = _get_angle(x1, y1, x2, y2)
         
         if _which_side(x1, y1, x2, y2, binary.shape[1]) == "left":
-            if theta <= -20 and theta >= -90:
+            if theta <= -20 and theta >= -70:
                 cv2.line(output, (x1, y1), (x2, y2), color=(255,0,0), thickness=20)
-                # print("left", theta)
+                print("left", theta)
                 
         else:
-            print("right", theta)
-            if theta >= 20 and theta <= 90:
+            if theta >= 20 and theta <= 70:
                 cv2.line(output, (x1, y1), (x2, y2), color=(0,0,255), thickness=20)
+                print("right", theta)
 
     return output
 
-if __name__ == "__main__":
-    # 1. Distortion Correction
+def img_to_line_mask(img):
     corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
 
-    # 2. Thresholding
-    # img = plt.imread('test_images/straight_lines1.jpg')
-    img = plt.imread('test_images/test2.jpg')
-    original = img.copy()
     img = corrector.run(img)
     img = region_of_interest(img)
 
     thd = thresholding(img)
-    kernel = np.ones((5,5),np.uint8)
-    dialate = cv2.dilate(thd, kernel, iterations = 2)
+    img = hough(thd, img)
+    return thd, img
+
+if __name__ == "__main__":
+    # 1. Distortion Correction
+    corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
+    
+    import glob
+    files = glob.glob('test_images//*.jpg')
+    for filename in files:
+        img = plt.imread(filename)
+        thd, outputs = img_to_line_mask(img)
+
+#     kernel = np.ones((5,5),np.uint8)
+#     dialate = cv2.dilate(thd, kernel, iterations = 3)
  
-    img = hough(dialate, img)
-    plot_images([original, thd, dialate, img],
-                ["original", "binary", "dialate", "Hough"])
+        plot_images([img, thd, outputs],
+                    ["original : {}".format(filename), "bin", "Hough"])
     
 
     
