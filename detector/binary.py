@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 
 
 # Todo : 구조 정리
-def thresholding(image, do_opening=False, do_closing=False):
+def thresholding(image, do_opening=False, do_closing=True):
     intensity_bin = Binarizer.intensity(image, (96, 255))
     gx_bin = Binarizer.gradient_x(image, (5, 255))
 
