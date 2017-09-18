@@ -8,6 +8,40 @@ import cv2
 import numpy as np
 import math
 
+
+    
+def region_of_interest(img):
+    """
+    Applies an image mask.
+    
+    Only keeps the region of the image defined by the polygon
+    formed from `vertices`. The rest of the image is set to black.
+    """
+    ylength, xlength = img.shape[:2]
+    
+    vertices = np.array([[(0, ylength),
+                          (xlength/2-ylength/10, ylength*0.5),
+                          (xlength/2+ylength/10, ylength*0.5),
+                          (xlength, ylength)]], dtype=np.int32)
+
+    
+    #defining a blank mask to start with
+    mask = np.zeros_like(img)   
+    
+    #defining a 3 channel or 1 channel color to fill the mask with depending on the input image
+    if len(img.shape) > 2:
+        channel_count = img.shape[2]  # i.e. 3 or 4 depending on your image
+        ignore_mask_color = (255,) * channel_count
+    else:
+        ignore_mask_color = 255
+        
+    #filling pixels inside the polygon defined by "vertices" with the fill color    
+    cv2.fillPoly(mask, vertices, ignore_mask_color)
+    
+    #returning the image only where mask pixels are nonzero
+    masked_image = cv2.bitwise_and(img, mask)
+    return masked_image
+    
 def hough(binary, img):
     
     def _get_angle(x1, y1, x2, y2):
@@ -57,15 +91,22 @@ if __name__ == "__main__":
 
     # 2. Thresholding
     # img = plt.imread('test_images/straight_lines1.jpg')
-    img = plt.imread('test_images/test4.jpg')
+    img = plt.imread('test_images/test2.jpg')
     original = img.copy()
     img = corrector.run(img)
+    img = region_of_interest(img)
+
     thd = thresholding(img)
-    
     kernel = np.ones((5,5),np.uint8)
     dialate = cv2.dilate(thd, kernel, iterations = 2)
-
+ 
     img = hough(dialate, img)
     plot_images([original, thd, dialate, img],
                 ["original", "binary", "dialate", "Hough"])
+    
+
+    
+    
+    
+    
 
