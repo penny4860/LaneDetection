@@ -59,7 +59,7 @@ if __name__ == "__main__":
     img = corrector.run(img)
     thd = thresholding(img)
     
-    kernel = np.ones((3,3),np.uint8)
+    kernel = np.ones((5,5),np.uint8)
     dialate = cv2.dilate(thd, kernel, iterations = 2)
 
     img = hough(dialate, img)
