@@ -11,7 +11,7 @@ def thresholding(image, do_opening=False, do_closing=True):
     gx_bin = Binarizer.gradient_x(image, (5, 255))
 
     output = np.zeros_like(gx_bin)
-    output[(gx_bin == 1) & (intensity_bin == 1)] = 1
+    output[(gx_bin == 1) & (intensity_bin == 1)] = 255
     if do_opening:
         output = image_opening(output)
     if do_closing:
@@ -66,6 +66,7 @@ class Binarizer(object):
     @staticmethod
     def gradient_y(img, thresh=(0, 255)):
         gray = cv2.cvtColor(img, cv2.COLOR_RGB2GRAY)
+        gray = cv2.GaussianBlur(gray,(5,5),0)
         
         # 2) Take the derivative in x or y given orient = 'x' or 'y'
         sobel = cv2.Sobel(gray, cv2.CV_64F, 0, 1)
@@ -119,14 +120,14 @@ def image_opening(image, ksize=(3,3)):
     denoised = cv2.morphologyEx(image, cv2.MORPH_OPEN, kernel)
     return denoised
 
-def image_closing(image, ksize=(7,7)):
+def image_closing(image, ksize=(5,5)):
     """
     # Args
         image : 2d array
             binary image
     """
     # kernel = np.ones(ksize, np.uint8)
-    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, (3,3))
+    kernel = cv2.getStructuringElement(cv2.MORPH_RECT, ksize)
     denoised = cv2.morphologyEx(image, cv2.MORPH_CLOSE, kernel)
     return denoised
 
