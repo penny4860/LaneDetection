@@ -47,7 +47,8 @@ class Binarizer(object):
         # Note: img is the undistorted image
         hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
         s_channel = hls[:,:,2]
-        binary = _to_binaray(s_channel, thresh)
+        _, binary = cv2.threshold(s_channel, thresh[0], thresh[1], cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+#         binary = _to_binaray(s_channel, thresh)
         return binary
 
     @staticmethod
