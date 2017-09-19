@@ -132,7 +132,7 @@ def image_closing(image, ksize=(5,5)):
     return denoised
 
 def plot_images(images, titles=None):
-    _, axes = plt.subplots(1, len(images), figsize=(20,10))
+    _, axes = plt.subplots(1, len(images), figsize=(10,10))
     
     for img, ax, text in zip(images, axes, titles):
         ax.imshow(img, cmap="gray")
