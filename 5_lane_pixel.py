@@ -100,8 +100,8 @@ if __name__ == "__main__":
         edges = cv2.Canny(img,50,200)
         img = region_of_interest(img)
     
-        binary_img = Binarizer.intensity(img, (72, 255))
-        binary_img = image_closing(binary_img) * 255
+        binary_img = Binarizer.intensity(img, (78, 255))
+        binary_img = image_closing(binary_img)
         
         combined = np.zeros_like(img)
         combined[:,:,0] += edges
