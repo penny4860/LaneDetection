@@ -101,15 +101,15 @@ if __name__ == "__main__":
         img = region_of_interest(img)
     
         binary_img = Binarizer.intensity(img, (72, 255))
-        binary_img = image_closing(binary_img) * 128
-
-        lines = hough(edges, img)
+        binary_img = image_closing(binary_img) * 255
         
-        combined = lines.copy()
-        combined[:,:,1] += binary_img
+        combined = np.zeros_like(img)
+        combined[:,:,0] += edges
+        combined[:,:,2] += binary_img
         combined = region_of_interest(combined)
-        plot_images([img, binary_img, edges, lines, combined],
-                    ["original : {}".format(filename), "binary", "edges", "lines", "combined"])
+        
+        plot_images([img, binary_img, edges, combined],
+                    ["original : {}".format(filename), "binary", "edges", "combined"])
     
     
     
