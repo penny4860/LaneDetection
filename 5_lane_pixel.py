@@ -2,7 +2,7 @@
 
 import matplotlib.pyplot as plt
 from detector.cal import DistortionCorrector
-from detector.binary import thresholding, plot_images, Binarizer
+from detector.binary import thresholding, plot_images, Binarizer, image_closing
 from detector.warp import PerspectTrans
 import cv2
 import numpy as np
@@ -41,6 +41,49 @@ def region_of_interest(img):
     masked_image = cv2.bitwise_and(img, mask)
     return masked_image
     
+def hough(binary, img):
+    
+    def _get_angle(x1, y1, x2, y2):
+        """Get angle to degree unit"""
+        dx = x2 - x1
+        dy = y2 - y1
+        return np.arctan2(dy, dx)*180/math.pi
+    
+    def _which_side(x1, y1, x2, y2, width):
+        if ((x1 + x2) / 2) < width / 2:
+            return "left"
+        else:
+            return "right"
+        
+    # Hough Transform
+    minLineLength = 5
+    maxLineGap = 1
+    n_lines_thd = 10
+    pixel_unit = 1
+    theta_unit = np.pi/180
+    lines = cv2.HoughLinesP(binary,
+                            pixel_unit,
+                            theta_unit,
+                            n_lines_thd,
+                            np.array([]),
+                            minLineLength=minLineLength,
+                            maxLineGap=maxLineGap)
+    
+    output = np.zeros_like(img)
+    
+    for line in lines:
+        x1, y1, x2, y2 = line[0]
+        theta = _get_angle(x1, y1, x2, y2)
+        
+        if _which_side(x1, y1, x2, y2, binary.shape[1]) == "left":
+            if theta <= -20 and theta >= -90:
+                cv2.line(output, (x1, y1), (x2, y2), color=(255,0,0), thickness=1)
+                
+        else:
+            if theta >= 20 and theta <= 90:
+                cv2.line(output, (x1, y1), (x2, y2), color=(0,0,255), thickness=1)
+
+    return output
 
 if __name__ == "__main__":
     # 1. Distortion Correction
@@ -48,20 +91,25 @@ if __name__ == "__main__":
     
     import glob
     files = glob.glob('test_images//*.jpg')
-    for filename in files:
+    for filename in files[3:]:
         img = plt.imread(filename)
         
         corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
 
         img = corrector.run(img)
+        edges = cv2.Canny(img,50,200)
         img = region_of_interest(img)
     
-        binary_img = Binarizer.intensity(img, (96, 255))
-        
-        plot_images([img, binary_img],
-                    ["original : {}".format(filename), "bin"])
-    
+        binary_img = Binarizer.intensity(img, (72, 255))
+        binary_img = image_closing(binary_img) * 128
 
+        lines = hough(edges, img)
+        
+        combined = lines.copy()
+        combined[:,:,1] += binary_img
+        combined = region_of_interest(combined)
+        plot_images([img, binary_img, edges, lines, combined],
+                    ["original : {}".format(filename), "binary", "edges", "lines", "combined"])
     
     
     
