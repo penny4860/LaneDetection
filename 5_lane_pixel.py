@@ -56,9 +56,9 @@ def hough(binary, img):
             return "right"
         
     # Hough Transform
-    minLineLength = 5
-    maxLineGap = 1
-    n_lines_thd = 10
+    minLineLength = 15
+    maxLineGap = 25
+    n_lines_thd = 15
     pixel_unit = 1
     theta_unit = np.pi/180
     lines = cv2.HoughLinesP(binary,
