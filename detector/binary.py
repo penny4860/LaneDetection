@@ -4,6 +4,37 @@ import numpy as np
 import cv2
 import matplotlib.pyplot as plt
 
+def region_of_interest(img):
+    """
+    Applies an image mask.
+    
+    Only keeps the region of the image defined by the polygon
+    formed from `vertices`. The rest of the image is set to black.
+    """
+    ylength, xlength = img.shape[:2]
+    
+    vertices = np.array([[(0, ylength),
+                          (xlength/2-ylength/10, ylength*0.5),
+                          (xlength/2+ylength/10, ylength*0.5),
+                          (xlength, ylength)]], dtype=np.int32)
+
+    
+    #defining a blank mask to start with
+    mask = np.zeros_like(img)   
+    
+    #defining a 3 channel or 1 channel color to fill the mask with depending on the input image
+    if len(img.shape) > 2:
+        channel_count = img.shape[2]  # i.e. 3 or 4 depending on your image
+        ignore_mask_color = (255,) * channel_count
+    else:
+        ignore_mask_color = 255
+        
+    #filling pixels inside the polygon defined by "vertices" with the fill color    
+    cv2.fillPoly(mask, vertices, ignore_mask_color)
+    
+    #returning the image only where mask pixels are nonzero
+    masked_image = cv2.bitwise_and(img, mask)
+    return masked_image
 
 # Todo : 구조 정리
 def thresholding(image, do_opening=False, do_closing=True):
@@ -47,7 +78,8 @@ class Binarizer(object):
         # Note: img is the undistorted image
         hls = cv2.cvtColor(image, cv2.COLOR_RGB2HLS)
         s_channel = hls[:,:,2]
-        binary = _to_binaray(s_channel, thresh)
+        _, binary = cv2.threshold(s_channel, thresh[0], thresh[1], cv2.THRESH_BINARY+cv2.THRESH_OTSU)
+#         binary = _to_binaray(s_channel, thresh)
         return binary
 
     @staticmethod
@@ -132,7 +164,7 @@ def image_closing(image, ksize=(5,5)):
     return denoised
 
 def plot_images(images, titles=None):
-    _, axes = plt.subplots(1, len(images), figsize=(20,10))
+    _, axes = plt.subplots(1, len(images), figsize=(10,10))
     
     for img, ax, text in zip(images, axes, titles):
         ax.imshow(img, cmap="gray")

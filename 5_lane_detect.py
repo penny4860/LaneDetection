@@ -5,6 +5,7 @@ from detector.cal import DistortionCorrector
 from detector.binary import thresholding, plot_images
 from detector.warp import PerspectTrans
 import cv2
+from detector.lane import run
 
 # test5.jpg
 import numpy as np
@@ -30,16 +31,15 @@ if __name__ == "__main__":
     corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
 
     # 2. Thresholding
-    img = plt.imread('test_images/test2.jpg')
-    img = corrector.run(img)
-    thd = thresholding(img, False)
-    denoised = thresholding(img)
+    img = plt.imread('test_images/test6.jpg')
+    # img = corrector.run(img)
+    img, bin, edges, combined, lane_map = run(img)
     
     translator = PerspectTrans.from_pkl("dataset//perspective_trans.pkl")
-    binary_warped = translator.run(thd)
-    
-    plot_images([img, denoised, binary_warped],
-                ["original", "thresholded + opening", "warped"])
+    binary_warped = translator.run(lane_map)
+
+    plot_images([img, binary_warped, lane_map],
+                ["original", "thresholded", "lane_map"])
 
     # 1. Create an output image to draw on and  visualize the result
     out_img = np.dstack((binary_warped, binary_warped, binary_warped))*255
@@ -50,7 +50,7 @@ if __name__ == "__main__":
     leftx_base, rightx_base = get_base(histogram)
     
     # Choose the number of sliding windows
-    nwindows = 9
+    nwindows = 5
     # Set height of windows
     window_height = np.int(binary_warped.shape[0]/nwindows)
     # Identify the x and y positions of all nonzero pixels in the image
@@ -61,7 +61,7 @@ if __name__ == "__main__":
     leftx_current = leftx_base
     rightx_current = rightx_base
     # Set the width of the windows +/- margin
-    margin = 250
+    margin = 300
     # Set minimum number of pixels found to recenter window
     minpix = 50
     # Create empty lists to receive left and right lane pixel indices
