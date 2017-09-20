@@ -40,7 +40,25 @@ def region_of_interest(img):
     #returning the image only where mask pixels are nonzero
     masked_image = cv2.bitwise_and(img, mask)
     return masked_image
+
+
+def run(img):
+    corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
+
+    img = corrector.run(img)
+    edges = cv2.Canny(img,50,200)
+    img = region_of_interest(img)
+
+    binary_img = Binarizer.intensity(img, (78, 255))
+    binary_img = image_closing(binary_img)
     
+    combined = np.zeros_like(img)
+    combined[:,:,0] += edges
+    combined[:,:,2] += binary_img
+    combined = region_of_interest(combined)
+    
+    return img, binary_img, edges, combined
+
 
 if __name__ == "__main__":
     # 1. Distortion Correction
@@ -50,20 +68,7 @@ if __name__ == "__main__":
     files = glob.glob('test_images//*.jpg')
     for filename in files[3:]:
         img = plt.imread(filename)
-        
-        corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
-
-        img = corrector.run(img)
-        edges = cv2.Canny(img,50,200)
-        img = region_of_interest(img)
-    
-        binary_img = Binarizer.intensity(img, (78, 255))
-        binary_img = image_closing(binary_img)
-        
-        combined = np.zeros_like(img)
-        combined[:,:,0] += edges
-        combined[:,:,2] += binary_img
-        combined = region_of_interest(combined)
+        img, binary_img, edges, combined = run(img)
         
         plot_images([img, binary_img, edges, combined],
                     ["original : {}".format(filename), "binary", "edges", "combined"])
