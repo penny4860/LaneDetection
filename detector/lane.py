@@ -27,7 +27,9 @@ def run(img):
     
     r_dist_map, l_dist_map = get_dist_map(binary_img, edges)
     lane_map = np.zeros_like(binary_img)
-    lane_map[(abs(r_dist_map - l_dist_map) <= 3) & (r_dist_map > 0) & (l_dist_map > 0) & (r_dist_map+l_dist_map < 20)] = 255
+    
+    # Todo : image의 row 위치에 따라서 r_dist_map+l_dist_map threshold 를 linear 하게 적용하자.
+    lane_map[(abs(r_dist_map - l_dist_map) <= 3) & (r_dist_map > 0) & (l_dist_map > 0) & (r_dist_map+l_dist_map < 30)] = 255
     
     return img, binary_img, edges, combined, lane_map
 
