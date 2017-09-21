@@ -31,13 +31,6 @@ def run(img):
     # Todo : image의 row 위치에 따라서 r_dist_map+l_dist_map threshold 를 linear 하게 적용하자.
     lane_map[(abs(r_dist_map - l_dist_map) <= 3) & (r_dist_map > 0) & (l_dist_map > 0) & (r_dist_map+l_dist_map < 30)] = 255
     
-    indices = np.where(lane_map == 255)
-    for r, c in zip(indices[0], indices[1]):
-        right_dist = int(r_dist_map[r, c])
-        left_dist = int(l_dist_map[r, c])
-        lane_map[r, c:c+right_dist] = 255
-        lane_map[r, c-left_dist+1:c] = 255
-    
     return img, binary_img, edges, combined, lane_map
 
 
