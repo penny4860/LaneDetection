@@ -17,8 +17,8 @@ if __name__ == "__main__":
     corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
      
     import glob
-    files = glob.glob('test_images//*.jpg')
-    for filename in files[2:]:
+    files = glob.glob('test_images//straight_lines1.jpg')
+    for filename in files:
         img = plt.imread(filename)
         img, binary_img, edges, combined, lane_map = run(img)
 
