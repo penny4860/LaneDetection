@@ -50,7 +50,7 @@ if __name__ == "__main__":
     leftx_base, rightx_base = get_base(histogram)
     
     # Choose the number of sliding windows
-    nwindows = 5
+    nwindows = 9
     # Set height of windows
     window_height = np.int(binary_warped.shape[0]/nwindows)
     # Identify the x and y positions of all nonzero pixels in the image
@@ -61,9 +61,10 @@ if __name__ == "__main__":
     leftx_current = leftx_base
     rightx_current = rightx_base
     # Set the width of the windows +/- margin
-    margin = 300
+    margin = 150
     # Set minimum number of pixels found to recenter window
-    minpix = 50
+    minpix = 10
+    
     # Create empty lists to receive left and right lane pixel indices
     left_lane_inds = []
     right_lane_inds = []
