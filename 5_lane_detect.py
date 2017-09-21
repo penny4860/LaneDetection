@@ -31,7 +31,7 @@ if __name__ == "__main__":
     corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
 
     # 2. Thresholding
-    img = plt.imread('test_images/test6.jpg')
+    img = plt.imread('test_images/test1.jpg')
     # img = corrector.run(img)
     img, bin, edges, combined, lane_map = run(img)
     
@@ -108,14 +108,14 @@ if __name__ == "__main__":
     
     # Fit a second order polynomial to each
     left_fit = np.polyfit(lefty, leftx, 2)
-    # right_fit = np.polyfit(righty, rightx, 2)
+    right_fit = np.polyfit(righty, rightx, 2)
     
-    from sklearn import linear_model
-    ransac = linear_model.RANSACRegressor()
-    ransac.fit(add_square_feature(righty), rightx)
-    
-    right_fit = ransac.estimator_.coef_.tolist()
-    right_fit.append(ransac.estimator_.intercept_)
+#     from sklearn import linear_model
+#     ransac = linear_model.RANSACRegressor()
+#     ransac.fit(add_square_feature(righty), rightx)
+#     
+#     right_fit = ransac.estimator_.coef_.tolist()
+#     right_fit.append(ransac.estimator_.intercept_)
 
     # Generate x and y values for plotting
     ploty = np.linspace(0, binary_warped.shape[0]-1, binary_warped.shape[0] )
