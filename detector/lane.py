@@ -23,9 +23,14 @@ class LanePixelDetector(object):
             edge_map : 2d array
             binary_map : 2d array
         """
-
+        
+        # 1. For the binary image, get the right & left edge distance map
         r_dist_map, l_dist_map = self._get_dist_map(edge_map, binary_map)
+
+        # 2. Get the lane map
         lane_map = self._get_lane_map(r_dist_map, l_dist_map)
+
+        # 3. Extend lane pixels
         lane_map = self._extend_lane_pixels(lane_map, r_dist_map, l_dist_map)
         return lane_map
 
