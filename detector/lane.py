@@ -9,9 +9,21 @@ import numpy as np
 
 np.set_printoptions(linewidth=500000)
 
+# class LanePixelDetector(object):
+#     """
+#     # Args
+#         distortion_corrector: DistortionCorrector
+#     """
+#     
+#     def __init__(self):
+#         pass
+#     
+#     def run(self, image):
+#         pass
 
-def run(img):
-    corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
+
+
+def run(img, corrector):
 
     img = corrector.run(img)
     edges = cv2.Canny(img,50,200)
@@ -80,15 +92,12 @@ def get_dist_map(binary_image, edge_map):
 
 
 if __name__ == "__main__":
-    
     # 1. Distortion Correction
-    corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
-     
     import glob
-    files = glob.glob('test_images//*.jpg')
-    for filename in files[5:]:
+    files = glob.glob('..//test_images//*.jpg')
+    for filename in files:
         img = plt.imread(filename)
-        img, binary_img, edges, combined, lane_map = run(img)
+        img, binary_img, edges, combined, lane_map = run(img, DistortionCorrector.from_pkl("..//dataset//distortion_corrector.pkl"))
 
         plot_images([img, combined, lane_map],
                     ["original : {}".format(filename), "combined", "lane_map"])
