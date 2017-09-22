@@ -23,7 +23,7 @@ np.set_printoptions(linewidth=500000)
 
 
 
-def run(img):
+def run(edge_map, binary_map):
     def _dist(array):
         indices = np.where(array != 0)[0]
         if indices.size == 0:
@@ -62,19 +62,8 @@ def run(img):
             left_dist_map[r, c] = l_dist
         return right_dist_map, left_dist_map
 
-    edges = cv2.Canny(img,50,200)
-    img = region_of_interest(img)
-
-    binary_img = Binarizer.intensity(img, (48, 255))
-    binary_img = image_closing(binary_img)
-    
-    combined = np.zeros_like(img)
-    combined[:,:,0] += edges
-    combined[:,:,2] += binary_img
-    combined = region_of_interest(combined)
-    
-    r_dist_map, l_dist_map = _get_dist_map(binary_img, edges)
-    lane_map = np.zeros_like(binary_img)
+    r_dist_map, l_dist_map = _get_dist_map(binary_map, edge_map)
+    lane_map = np.zeros_like(binary_map)
     
     # Todo : image의 row 위치에 따라서 r_dist_map+l_dist_map threshold 를 linear 하게 적용하자.
     lane_map[(abs(r_dist_map - l_dist_map) <= 3) & (r_dist_map > 0) & (l_dist_map > 0) & (r_dist_map+l_dist_map < 30)] = 255
@@ -86,11 +75,17 @@ def run(img):
         lane_map[r, c:c+right_dist] = 255
         lane_map[r, c-left_dist+1:c] = 255
     
-    return img, binary_img, edges, combined, lane_map
+    return lane_map
 
 
 if __name__ == "__main__":
     corrector = DistortionCorrector.from_pkl("..//dataset//distortion_corrector.pkl")
+
+#     combined = np.zeros_like(img)
+#     combined[:,:,0] += edges
+#     combined[:,:,2] += binary_img
+#     combined = region_of_interest(combined)
+
     
     # 1. Distortion Correction
     import glob
@@ -98,9 +93,14 @@ if __name__ == "__main__":
     for filename in files[:1]:
         img = plt.imread(filename)
         img = corrector.run(img)
-        img, binary_img, edges, combined, lane_map = run(img)
+        
+        edges = cv2.Canny(img,50,200)
+        binary_img = Binarizer.intensity(region_of_interest(img), (48, 255))
+        binary_img = image_closing(binary_img)
 
-        plot_images([img, combined, lane_map],
-                    ["original : {}".format(filename), "combined", "lane_map"])
+        lane_map = run(edges, binary_img)
+
+        plot_images([img, lane_map],
+                    ["original : {}".format(filename), "lane_map"])
 
 
