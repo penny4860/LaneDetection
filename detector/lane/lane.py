@@ -1,12 +1,8 @@
 # -*- coding: utf-8 -*-
 
 import matplotlib.pyplot as plt
-from detector.cal import DistortionCorrector
 import cv2
 import numpy as np
-
-
-np.set_printoptions(linewidth=500000)
 
 
 class LaneDetector(object):
@@ -71,8 +67,6 @@ class LaneDetector(object):
 
         # original / binary / edge / combined / lane
         _plot_images([img, combined, lane], ["input", "binary(Blue) & edge(Red)", "lane"])
-        
-
         
 
 class EdgeDistanceCalculator(object):
@@ -180,7 +174,7 @@ class MidTwoEdges(object):
 
 
 if __name__ == "__main__":
-    from detector.imutils import plot_images
+    from detector.cal import DistortionCorrector
     from detector.lane.binary import SchannelBin
     from detector.lane.edge import CannyEdgeExtractor
     from detector.lane.mask import LaneImageMask
