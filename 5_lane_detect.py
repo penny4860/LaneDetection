@@ -201,6 +201,13 @@ def run_framework(image):
     lane_map = translator.run(lane_map)
     return lane_map
 
+
+def generate_pts(out_img, fitter):
+    ploty = np.linspace(0, out_img.shape[0]-1, out_img.shape[0] )
+    left_fitx = fitter._left_fit[0]*ploty**2 + fitter._left_fit[1]*ploty + fitter._left_fit[2]
+    right_fitx = fitter._right_fit[0]*ploty**2 + fitter._right_fit[1]*ploty + fitter._right_fit[2]
+    return ploty, left_fitx, right_fitx
+
 if __name__ == "__main__":
 
     # 1. Get bird eye's view lane map
@@ -212,12 +219,47 @@ if __name__ == "__main__":
     fitter = LaneCurveFit()
     out_img = fitter.run(lane_map_ipt)
     fitter.calc_curvature()
-    
-    # 2485.49818026 m 3063.19746321 m
-
-#     plot_images([img, out_img],
-#                 ["original", "lane_map"])
     fitter.plot(out_img)
+    
+    # 1. Get fitting curve polynomial
+    ploty, left_fitx, right_fitx = generate_pts(out_img, fitter)
+    Minv = PerspectTrans.from_pkl('dataset/perspective_trans.pkl')._Minv
+    image = img
+    
+    # Create an image to draw the lines on
+    color_warp = np.zeros_like(img).astype(np.uint8)
+    # Recast the x and y points into usable format for cv2.fillPoly()
+    pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
+    pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
+    pts = np.hstack((pts_left, pts_right))
+    
+    # Draw the lane onto the warped blank image
+    cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
+    
+    # Warp the blank back to original image space using inverse perspective matrix (Minv)
+    newwarp = cv2.warpPerspective(color_warp, Minv, (image.shape[1], image.shape[0]))
+    
+    # plot_images([img, newwarp], ["original", "new"])
+    
+    corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
+    undist = corrector.run(image)
+
+    # Combine the result with the original image
+    result = cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
+    plt.imshow(result)
+    plt.show()
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
+    
     
     
 
