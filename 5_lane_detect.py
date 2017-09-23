@@ -17,27 +17,21 @@ np.set_printoptions(linewidth=1000, edgeitems=1000)
 class LaneCurveFit(object):
     def __init__(self):
         pass
-
-    def run(self, lane_map, nwindows=9, margin=150, minpix=10):
-        """
-        # Args
-            lane_map : array
-                bird eye's view binary image
-            nwindows : int
-                number of windows
-            margin : int
-                the width of the windows +/- margin
-            minpix : int
-                minimum number of pixels found to recenter window
-        """
-        # 1. Create an output image to draw on and  visualize the result
-        out_img = np.dstack((lane_map, lane_map, lane_map)).astype(np.uint8)
     
-        # 2. Get Histogram
-        roi = self._get_roi(lane_map)
-        
+    def _get_roi(self, image):
+        # bottom half of the image
+        return image[image.shape[0]//2:,:]
+
+    def _get_base(self, roi):
         histogram = np.sum(roi, axis=0)
-        leftx_base, rightx_base = self._get_base(histogram)
+
+        midpoint = np.int(histogram.shape[0]/2)
+        leftx_base = np.argmax(histogram[:midpoint])
+        rightx_base = np.argmax(histogram[midpoint:]) + midpoint
+        return leftx_base, rightx_base
+
+    def _run_sliding_window(self, leftx_base, rightx_base, nwindows=9, margin=150, minpix=10):
+        lane_map = self._lane_map
         
         # Choose the number of sliding windows
         # Set height of windows
@@ -53,7 +47,7 @@ class LaneCurveFit(object):
         # Create empty lists to receive left and right lane pixel indices
         left_lane_inds = []
         right_lane_inds = []
-        
+
         # Step through the windows one by one
         for window in range(nwindows):
             # Identify window boundaries in x and y (and right and left)
@@ -64,9 +58,9 @@ class LaneCurveFit(object):
             win_xright_low = rightx_current - margin
             win_xright_high = rightx_current + margin
             # Draw the windows on the visualization image
-            cv2.rectangle(out_img,(win_xleft_low,win_y_low),(win_xleft_high,win_y_high),
+            cv2.rectangle(self._out_img,(win_xleft_low,win_y_low),(win_xleft_high,win_y_high),
             (0,255,0), 2) 
-            cv2.rectangle(out_img,(win_xright_low,win_y_low),(win_xright_high,win_y_high),
+            cv2.rectangle(self._out_img,(win_xright_low,win_y_low),(win_xright_high,win_y_high),
             (0,255,0), 2) 
             # Identify the nonzero pixels in x and y within the window
             good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & 
@@ -81,9 +75,36 @@ class LaneCurveFit(object):
                 leftx_current = np.int(np.mean(nonzerox[good_left_inds]))
             if len(good_right_inds) > minpix:        
                 rightx_current = np.int(np.mean(nonzerox[good_right_inds]))
+        return left_lane_inds, right_lane_inds, nonzerox, nonzeroy
+    
+    def run(self, lane_map):
+        """
+        # Args
+            lane_map : array
+                bird eye's view binary image
+            nwindows : int
+                number of windows
+            margin : int
+                the width of the windows +/- margin
+            minpix : int
+                minimum number of pixels found to recenter window
+        """
+        self._lane_map = lane_map
+        
+        # 1. Create an output image to draw on and  visualize the result
+        self._out_img = np.dstack((lane_map, lane_map, lane_map)).astype(np.uint8)
+    
+        # 2. Get Histogram
+        roi = self._get_roi(lane_map)
+        leftx_base, rightx_base = self._get_base(roi)
+        
+        # 3. Step through the windows one by one
+        left_lane_inds, right_lane_inds, nonzerox, nonzeroy = self._run_sliding_window(leftx_base, rightx_base)
                 
         left_lane_inds = np.concatenate(left_lane_inds)
         right_lane_inds = np.concatenate(right_lane_inds)
+        
+        # 4. Fit curve
         left_fit, right_fit = self._fit_curve(left_lane_inds, right_lane_inds, nonzerox, nonzeroy)
         
         self._left_lane_inds = left_lane_inds
@@ -92,7 +113,7 @@ class LaneCurveFit(object):
         self._nonzeroy = nonzeroy
         self._left_fit = left_fit
         self._right_fit = right_fit
-        return out_img
+        return self._out_img
 
     def plot(self, out_img):
         # Generate x and y values for plotting
@@ -109,16 +130,6 @@ class LaneCurveFit(object):
         plt.ylim(720, 0)
          
         plt.show()
-
-    def _get_roi(self, image):
-        # bottom half of the image
-        return image[image.shape[0]//2:,:]
-
-    def _get_base(self, histogram):
-        midpoint = np.int(histogram.shape[0]/2)
-        leftx_base = np.argmax(histogram[:midpoint])
-        rightx_base = np.argmax(histogram[midpoint:]) + midpoint
-        return leftx_base, rightx_base
 
     def _fit_curve(self, left_lane_inds, right_lane_inds, nonzerox, nonzeroy):
         #     from sklearn import linear_model
