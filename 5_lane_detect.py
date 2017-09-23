@@ -85,17 +85,23 @@ class LaneCurveFit(object):
         left_lane_inds = np.concatenate(left_lane_inds)
         right_lane_inds = np.concatenate(right_lane_inds)
         left_fit, right_fit = self._fit_curve(left_lane_inds, right_lane_inds, nonzerox, nonzeroy)
+        
+        self._left_lane_inds = left_lane_inds
+        self._right_lane_inds = right_lane_inds
+        self._nonzerox = nonzerox
+        self._nonzeroy = nonzeroy
+        self._left_fit = left_fit
+        self._right_fit = right_fit
+        return out_img
 
-        return out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy, left_fit, right_fit
-
-    def plot(self, out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy, left_fit, right_fit):
+    def plot(self, out_img):
         # Generate x and y values for plotting
         ploty = np.linspace(0, out_img.shape[0]-1, out_img.shape[0] )
-        left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
-        right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+        left_fitx = self._left_fit[0]*ploty**2 + self._left_fit[1]*ploty + self._left_fit[2]
+        right_fitx = self._right_fit[0]*ploty**2 + self._right_fit[1]*ploty + self._right_fit[2]
          
-        out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
-        out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
+        out_img[self._nonzeroy[self._left_lane_inds], self._nonzerox[self._left_lane_inds]] = [255, 0, 0]
+        out_img[self._nonzeroy[self._right_lane_inds], self._nonzerox[self._right_lane_inds]] = [0, 0, 255]
         plt.imshow(out_img)
         plt.plot(left_fitx, ploty, color='yellow')
         plt.plot(right_fitx, ploty, color='yellow')
@@ -172,11 +178,11 @@ if __name__ == "__main__":
 
     lane_map_ipt = run_framework(img)
     fitter = LaneCurveFit()
-    out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy, left_fit, right_fit = fitter.run(lane_map_ipt)
+    out_img = fitter.run(lane_map_ipt)
 
-    plot_images([img, out_img],
-                ["original", "lane_map"])
+#     plot_images([img, out_img],
+#                 ["original", "lane_map"])
     
-    fitter.plot(out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy, left_fit, right_fit)
+    fitter.plot(out_img)
     
 
