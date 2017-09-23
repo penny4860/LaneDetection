@@ -8,23 +8,35 @@ import numpy as np
 
 np.set_printoptions(linewidth=500000)
 
-class LanePixelDetector(object):
+
+class LaneDetector(object):
     """Detect lane pixels using edge map & binay map"""
     
     _VALID_PIXEL = 255
     
-    def __init__(self):
-        pass
+    def __init__(self, edge_detector, binary_extractor, image_mask):
+        self._edge_detector = edge_detector
+        self._bin_extractor = binary_extractor
+        self._img_mask = image_mask
      
-    def run(self, edge_map, binary_map):
+    def run(self, image):
         """
         # Args
-            edge_map : 2d array
-            binary_map : 2d array
+            image : 3d array
+                RGB ordered image
+            
+        # Returns
+            lane_map : 2d array
+                lane pixel detector binary image
         """
         
+        edge_map = self._edge_detector.run(image)
+        binary = self._bin_extractor.run(image)
+        binary_roi = self._img_mask.run(binary)
+        # binary_img = closing(binary_img)
+        
         # 1. For the binary image, get the right & left edge distance map
-        r_dist_map, l_dist_map = self._get_dist_map(edge_map, binary_map)
+        r_dist_map, l_dist_map = self._get_dist_map(edge_map, binary_roi)
 
         # 2. Get the lane map
         lane_map = self._get_lane_map(r_dist_map, l_dist_map)
@@ -123,6 +135,9 @@ class LanePixelDetector(object):
 if __name__ == "__main__":
     from detector.imutils import plot_images, closing
     from detector.binary import SchannelBin
+    from detector.edge import CannyEdgeExtractor
+    from detector.mask import LaneImageMask
+    
     corrector = DistortionCorrector.from_pkl("..//dataset//distortion_corrector.pkl")
 
 #     combined = np.zeros_like(img)
@@ -130,7 +145,12 @@ if __name__ == "__main__":
 #     combined[:,:,2] += binary_img
 #     combined = region_of_interest(combined)
 
-    detector = LanePixelDetector()
+    _edge_detector = CannyEdgeExtractor(50, 200)
+    _binary_extractor = SchannelBin((48, 255))
+    _image_mask = LaneImageMask()
+
+    detector = LaneDetector(_edge_detector, _binary_extractor, _image_mask)
+
     # 1. Distortion Correction
     import glob
     files = glob.glob('..//test_images//*.jpg')
@@ -138,14 +158,7 @@ if __name__ == "__main__":
         img = plt.imread(filename)
         img = corrector.run(img)
         
-        edges = cv2.Canny(img,50,200)
-
-        binarizer = SchannelBin()
-        binary_img = binarizer.run(img, (48, 255))
-        binary_img = binarizer.roi_mask(binary_img)
-        binary_img = closing(binary_img)
-        lane_map = detector.run(edges, binary_img)
-
+        lane_map = detector.run(img)
         plot_images([img, lane_map],
                     ["original : {}".format(filename), "lane_map"])
 
