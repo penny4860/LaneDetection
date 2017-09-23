@@ -81,7 +81,28 @@ class LaneCurveFit(object):
                 leftx_current = np.int(np.mean(nonzerox[good_left_inds]))
             if len(good_right_inds) > minpix:        
                 rightx_current = np.int(np.mean(nonzerox[good_right_inds]))
-        return out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy
+                
+        left_lane_inds = np.concatenate(left_lane_inds)
+        right_lane_inds = np.concatenate(right_lane_inds)
+        left_fit, right_fit = self._fit_curve(left_lane_inds, right_lane_inds, nonzerox, nonzeroy)
+
+        return out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy, left_fit, right_fit
+
+    def plot(self, out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy, left_fit, right_fit):
+        # Generate x and y values for plotting
+        ploty = np.linspace(0, out_img.shape[0]-1, out_img.shape[0] )
+        left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+        right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+         
+        out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
+        out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
+        plt.imshow(out_img)
+        plt.plot(left_fitx, ploty, color='yellow')
+        plt.plot(right_fitx, ploty, color='yellow')
+        plt.xlim(0, 1280)
+        plt.ylim(720, 0)
+         
+        plt.show()
 
     def _get_roi(self, image):
         # bottom half of the image
@@ -92,6 +113,27 @@ class LaneCurveFit(object):
         leftx_base = np.argmax(histogram[:midpoint])
         rightx_base = np.argmax(histogram[midpoint:]) + midpoint
         return leftx_base, rightx_base
+
+    def _fit_curve(self, left_lane_inds, right_lane_inds, nonzerox, nonzeroy):
+        #     from sklearn import linear_model
+        #     ransac = linear_model.RANSACRegressor()
+        #     ransac.fit(add_square_feature(righty), rightx)
+        #     
+        #     right_fit = ransac.estimator_.coef_.tolist()
+        #     right_fit.append(ransac.estimator_.intercept_)
+        # Concatenate the arrays of indices
+    
+        # Extract left and right line pixel positions
+        leftx = nonzerox[left_lane_inds]
+        lefty = nonzeroy[left_lane_inds] 
+        rightx = nonzerox[right_lane_inds]
+        righty = nonzeroy[right_lane_inds] 
+         
+        # Fit a second order polynomial to each
+        left_fit = np.polyfit(lefty, leftx, 2)
+        right_fit = np.polyfit(righty, rightx, 2)
+        return left_fit, right_fit
+
 
 def add_square_feature(X):
     X = np.concatenate([(X**2).reshape(-1,1), X.reshape(-1,1)], axis=1)
@@ -130,46 +172,11 @@ if __name__ == "__main__":
 
     lane_map_ipt = run_framework(img)
     fitter = LaneCurveFit()
-    out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy = fitter.run(lane_map_ipt)
+    out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy, left_fit, right_fit = fitter.run(lane_map_ipt)
 
     plot_images([img, out_img],
                 ["original", "lane_map"])
     
-    
-#     # Concatenate the arrays of indices
-#     left_lane_inds = np.concatenate(left_lane_inds)
-#     right_lane_inds = np.concatenate(right_lane_inds)
-#     
-#     # Extract left and right line pixel positions
-#     leftx = nonzerox[left_lane_inds]
-#     lefty = nonzeroy[left_lane_inds] 
-#     rightx = nonzerox[right_lane_inds]
-#     righty = nonzeroy[right_lane_inds] 
-#     
-#     # Fit a second order polynomial to each
-#     left_fit = np.polyfit(lefty, leftx, 2)
-#     right_fit = np.polyfit(righty, rightx, 2)
-#     
-# #     from sklearn import linear_model
-# #     ransac = linear_model.RANSACRegressor()
-# #     ransac.fit(add_square_feature(righty), rightx)
-# #     
-# #     right_fit = ransac.estimator_.coef_.tolist()
-# #     right_fit.append(ransac.estimator_.intercept_)
-# 
-#     # Generate x and y values for plotting
-#     ploty = np.linspace(0, out_img.shape[0]-1, out_img.shape[0] )
-#     left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
-#     right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
-#     
-#     out_img[nonzeroy[left_lane_inds], nonzerox[left_lane_inds]] = [255, 0, 0]
-#     out_img[nonzeroy[right_lane_inds], nonzerox[right_lane_inds]] = [0, 0, 255]
-#     plt.imshow(out_img)
-#     plt.plot(left_fitx, ploty, color='yellow')
-#     plt.plot(right_fitx, ploty, color='yellow')
-#     plt.xlim(0, 1280)
-#     plt.ylim(720, 0)
-#     
-#     plt.show()
+    fitter.plot(out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy, left_fit, right_fit)
     
 
