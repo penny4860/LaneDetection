@@ -10,7 +10,7 @@ class _BinExtractor(object):
         threshold : tuple
             (min_threshold, max_threshold)
     """
-    def __init__(self, threshold=(0, 255)):
+    def __init__(self, threshold=(48, 255)):
         self._threshold = threshold
     
     def run(self, image):
@@ -110,4 +110,20 @@ class GyBin(_BinExtractor):
         sobel = self._to_uint8_scale(sobel)
         binary = self._to_binaray(sobel)
         return binary
+
+
+if __name__ == "__main__":
+    import matplotlib.pyplot as plt
+    import glob
+    
+    bin_extractor = SchannelBin((48, 255))
+    files = glob.glob('..//test_images//*.jpg')
+    for filename in files[:1]:
+        img = plt.imread(filename)
+        binary_img = bin_extractor.run(img)
+        plt.imshow(binary_img, cmap="gray")
+        plt.show()
+
+
+
 
