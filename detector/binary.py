@@ -11,6 +11,37 @@ class _Binarizer(object):
     def run(self, image, thresh):
         pass
 
+    # Todo : 여러개를 사용할 수 있는 design pattern 을 찾아보자.
+    def roi_mask(self, img, vertices=None):
+        
+        def _set_default_vertices(img):
+            ylength, xlength = img.shape[:2]
+            vertices = np.array([[(0, ylength),
+                                  (xlength/2-ylength/10, ylength*0.5),
+                                  (xlength/2+ylength/10, ylength*0.5),
+                                  (xlength, ylength)]], dtype=np.int32)
+            return vertices
+        
+        #defining a blank mask to start with
+        mask = np.zeros_like(img)
+        
+        if vertices is None:
+            vertices = _set_default_vertices(img)
+        
+        #defining a 3 channel or 1 channel color to fill the mask with depending on the input image
+        if len(img.shape) > 2:
+            channel_count = img.shape[2]  # i.e. 3 or 4 depending on your image
+            ignore_mask_color = (255,) * channel_count
+        else:
+            ignore_mask_color = 255
+            
+        #filling pixels inside the polygon defined by "vertices" with the fill color    
+        cv2.fillPoly(mask, vertices, ignore_mask_color)
+        
+        #returning the image only where mask pixels are nonzero
+        masked_image = cv2.bitwise_and(img, mask)
+        return masked_image
+
     def _to_binaray(self, image, threshold=(0, 255)):
         """
         # Args
@@ -110,28 +141,3 @@ class GyBin(_Binarizer):
         binary = self._to_binaray(sobel, thresh)
         return binary
 
-
-def roi_mask(img, vertices=None):
-    #defining a blank mask to start with
-    mask = np.zeros_like(img)
-    
-    if vertices is None:
-        ylength, xlength = img.shape[:2]
-        vertices = np.array([[(0, ylength),
-                              (xlength/2-ylength/10, ylength*0.5),
-                              (xlength/2+ylength/10, ylength*0.5),
-                              (xlength, ylength)]], dtype=np.int32)
-    
-    #defining a 3 channel or 1 channel color to fill the mask with depending on the input image
-    if len(img.shape) > 2:
-        channel_count = img.shape[2]  # i.e. 3 or 4 depending on your image
-        ignore_mask_color = (255,) * channel_count
-    else:
-        ignore_mask_color = 255
-        
-    #filling pixels inside the polygon defined by "vertices" with the fill color    
-    cv2.fillPoly(mask, vertices, ignore_mask_color)
-    
-    #returning the image only where mask pixels are nonzero
-    masked_image = cv2.bitwise_and(img, mask)
-    return masked_image

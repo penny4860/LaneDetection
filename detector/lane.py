@@ -2,7 +2,6 @@
 
 import matplotlib.pyplot as plt
 from detector.cal import DistortionCorrector
-from detector.binary import plot_images, Binarizer, image_closing, region_of_interest
 import cv2
 import numpy as np
 
@@ -122,6 +121,8 @@ class LanePixelDetector(object):
 
 
 if __name__ == "__main__":
+    from detector.imutils import plot_images, closing
+    from detector.binary import SchannelBin
     corrector = DistortionCorrector.from_pkl("..//dataset//distortion_corrector.pkl")
 
 #     combined = np.zeros_like(img)
@@ -138,9 +139,11 @@ if __name__ == "__main__":
         img = corrector.run(img)
         
         edges = cv2.Canny(img,50,200)
-        binary_img = Binarizer.intensity(region_of_interest(img), (48, 255))
-        binary_img = image_closing(binary_img)
 
+        binarizer = SchannelBin()
+        binary_img = binarizer.run(img, (48, 255))
+        binary_img = binarizer.roi_mask(binary_img)
+        binary_img = closing(binary_img)
         lane_map = detector.run(edges, binary_img)
 
         plot_images([img, lane_map],
