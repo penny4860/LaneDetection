@@ -17,12 +17,18 @@ np.set_printoptions(linewidth=1000, edgeitems=1000)
 class LaneCurveFit(object):
     def __init__(self):
         pass
-    
-    def run(self, lane_map):
+
+    def run(self, lane_map, nwindows=9, margin=150, minpix=10):
         """
         # Args
             lane_map : array
                 bird eye's view binary image
+            nwindows : int
+                number of windows
+            margin : int
+                the width of the windows +/- margin
+            minpix : int
+                minimum number of pixels found to recenter window
         """
         # 1. Create an output image to draw on and  visualize the result
         out_img = np.dstack((lane_map, lane_map, lane_map)).astype(np.uint8)
@@ -31,10 +37,9 @@ class LaneCurveFit(object):
         roi = self._get_roi(lane_map)
         
         histogram = np.sum(roi, axis=0)
-        leftx_base, rightx_base = get_base(histogram)
+        leftx_base, rightx_base = self._get_base(histogram)
         
         # Choose the number of sliding windows
-        nwindows = 9
         # Set height of windows
         window_height = np.int(lane_map.shape[0]/nwindows)
         # Identify the x and y positions of all nonzero pixels in the image
@@ -44,10 +49,6 @@ class LaneCurveFit(object):
         # Current positions to be updated for each window
         leftx_current = leftx_base
         rightx_current = rightx_base
-        # Set the width of the windows +/- margin
-        margin = 150
-        # Set minimum number of pixels found to recenter window
-        minpix = 10
         
         # Create empty lists to receive left and right lane pixel indices
         left_lane_inds = []
@@ -86,11 +87,11 @@ class LaneCurveFit(object):
         # bottom half of the image
         return image[image.shape[0]//2:,:]
 
-def get_base(histogram):
-    midpoint = np.int(histogram.shape[0]/2)
-    leftx_base = np.argmax(histogram[:midpoint])
-    rightx_base = np.argmax(histogram[midpoint:]) + midpoint
-    return leftx_base, rightx_base
+    def _get_base(self, histogram):
+        midpoint = np.int(histogram.shape[0]/2)
+        leftx_base = np.argmax(histogram[:midpoint])
+        rightx_base = np.argmax(histogram[midpoint:]) + midpoint
+        return leftx_base, rightx_base
 
 def add_square_feature(X):
     X = np.concatenate([(X**2).reshape(-1,1), X.reshape(-1,1)], axis=1)
@@ -126,7 +127,6 @@ if __name__ == "__main__":
 
     # 1. Get bird eye's view lane map
     img = plt.imread('test_images/test1.jpg')
-#     binary_warped = run_framework(img)
 
     lane_map_ipt = run_framework(img)
     fitter = LaneCurveFit()
