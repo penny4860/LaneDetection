@@ -11,7 +11,6 @@ from detector.imutils import closing
 
 # test5.jpg
 import numpy as np
-from test.test_venv import failsOnWindows
 np.set_printoptions(linewidth=1000, edgeitems=1000)
 
 
@@ -145,7 +144,32 @@ class LaneCurveFit(object):
         # Fit a second order polynomial to each
         left_fit = np.polyfit(lefty, leftx, 2)
         right_fit = np.polyfit(righty, rightx, 2)
+        
+        self._leftx = leftx
+        self._lefty = lefty
+        self._rightx = rightx
+        self._righty = righty
         return left_fit, right_fit
+
+    def calc_curvature(self):
+        def _calc(y_eval, coef):
+            curverad = ((1 + (2*coef[0]*y_eval + coef[1])**2)**1.5) / np.absolute(2*coef[0])
+            return curverad
+        
+        ym_per_pix = 30/720 # meters per pixel in y dimension
+        xm_per_pix = 3.7/700 # meters per pixel in x dimension
+        # 2. Fit new polynomials to x,y in world space
+        left_fit = np.polyfit(self._lefty*ym_per_pix, self._leftx*xm_per_pix, 2)
+        right_fit = np.polyfit(self._righty*ym_per_pix, self._rightx*xm_per_pix, 2)
+
+
+        # 3. Calculate the new radii of curvature
+        left_curverad = _calc(np.max(self._lefty*ym_per_pix), left_fit)
+        right_curverad = _calc(np.max(self._righty*ym_per_pix), right_fit)
+        
+        # Now our radius of curvature is in meters
+        print(left_curverad, 'm', right_curverad, 'm')
+        return left_curverad, right_curverad
 
 
 def add_square_feature(X):
@@ -177,19 +201,23 @@ def run_framework(image):
     lane_map = translator.run(lane_map)
     return lane_map
 
-
 if __name__ == "__main__":
 
     # 1. Get bird eye's view lane map
-    img = plt.imread('test_images/test1.jpg')
+    img = plt.imread('test_images/straight_lines1.jpg')
+    img = plt.imread('test_images/test2.jpg')
+    
 
     lane_map_ipt = run_framework(img)
     fitter = LaneCurveFit()
     out_img = fitter.run(lane_map_ipt)
+    fitter.calc_curvature()
+    
+    # 2485.49818026 m 3063.19746321 m
 
 #     plot_images([img, out_img],
 #                 ["original", "lane_map"])
-    
     fitter.plot(out_img)
+    
     
 
