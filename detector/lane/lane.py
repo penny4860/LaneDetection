@@ -142,7 +142,7 @@ if __name__ == "__main__":
     from detector.imutils import plot_images
     from detector.lane.binary import SchannelBin
     from detector.lane.edge import CannyEdgeExtractor
-    from detector.mask import LaneImageMask
+    from detector.lane.mask import LaneImageMask
     
     corrector = DistortionCorrector.from_pkl("..//..//dataset//distortion_corrector.pkl")
 
