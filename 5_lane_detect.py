@@ -50,12 +50,11 @@ def run_framework(image):
 
 if __name__ == "__main__":
 
-
     # 2. Thresholding
     img = plt.imread('test_images/test1.jpg')
     lane_map = run_framework(img)
+    translator = PerspectTrans.from_pkl('dataset/perspective_trans.pkl')
     
-    translator = PerspectTrans()
     binary_warped = translator.run(lane_map)
     plot_images([img, binary_warped, lane_map],
                 ["original", "thresholded", "lane_map"])
