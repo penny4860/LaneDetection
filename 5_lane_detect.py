@@ -60,7 +60,7 @@ if __name__ == "__main__":
                 ["original", "thresholded", "lane_map"])
 
     # 1. Create an output image to draw on and  visualize the result
-    out_img = np.dstack((binary_warped, binary_warped, binary_warped))*255
+    out_img = np.dstack((binary_warped, binary_warped, binary_warped)).astype(np.uint8)
 
     # 2. Get Histogram
     roi = get_roi(binary_warped)
