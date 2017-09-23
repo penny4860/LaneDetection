@@ -19,6 +19,37 @@ class LaneCurveFit(object):
     def __init__(self):
         pass
 
+    def run(self, lane_map):
+        """
+        # Args
+            lane_map : array
+                bird eye's view binary image
+            nwindows : int
+                number of windows
+            margin : int
+                the width of the windows +/- margin
+            minpix : int
+                minimum number of pixels found to recenter window
+        """
+        self._lane_map = lane_map
+        
+        # 1. Create an output image to draw on and  visualize the result
+        self._out_img = np.dstack((lane_map, lane_map, lane_map)).astype(np.uint8)
+    
+        # 2. Step through the windows one by one
+        left_lane_inds, right_lane_inds, nonzerox, nonzeroy = self._run_sliding_window()
+        
+        # 4. Fit curve
+        left_fit, right_fit = self._fit_curve(left_lane_inds, right_lane_inds, nonzerox, nonzeroy)
+        
+        self._left_lane_inds = left_lane_inds
+        self._right_lane_inds = right_lane_inds
+        self._nonzerox = nonzerox
+        self._nonzeroy = nonzeroy
+        self._left_fit = left_fit
+        self._right_fit = right_fit
+        return self._out_img
+
     def _get_base(self, image):
         roi = image[image.shape[0]//2:,:]
         histogram = np.sum(roi, axis=0)
@@ -79,37 +110,6 @@ class LaneCurveFit(object):
         left_lane_inds = np.concatenate(left_lane_inds)
         right_lane_inds = np.concatenate(right_lane_inds)
         return left_lane_inds, right_lane_inds, nonzerox, nonzeroy
-    
-    def run(self, lane_map):
-        """
-        # Args
-            lane_map : array
-                bird eye's view binary image
-            nwindows : int
-                number of windows
-            margin : int
-                the width of the windows +/- margin
-            minpix : int
-                minimum number of pixels found to recenter window
-        """
-        self._lane_map = lane_map
-        
-        # 1. Create an output image to draw on and  visualize the result
-        self._out_img = np.dstack((lane_map, lane_map, lane_map)).astype(np.uint8)
-    
-        # 2. Step through the windows one by one
-        left_lane_inds, right_lane_inds, nonzerox, nonzeroy = self._run_sliding_window()
-        
-        # 4. Fit curve
-        left_fit, right_fit = self._fit_curve(left_lane_inds, right_lane_inds, nonzerox, nonzeroy)
-        
-        self._left_lane_inds = left_lane_inds
-        self._right_lane_inds = right_lane_inds
-        self._nonzerox = nonzerox
-        self._nonzeroy = nonzeroy
-        self._left_fit = left_fit
-        self._right_fit = right_fit
-        return self._out_img
 
     def plot(self, out_img):
         # Generate x and y values for plotting
