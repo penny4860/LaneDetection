@@ -10,7 +10,13 @@ np.set_printoptions(linewidth=500000)
 
 
 class LaneDetector(object):
-    """Detect lane pixels using edge map & binay map"""
+    """Detect lane pixels using edge map & binay map
+    
+    # Args
+        edge_detector : _EdgeExtractor
+        binary_extractor : _BinExtractor
+        image_mask : ImageMask
+    """
     
     _VALID_PIXEL = 255
     
