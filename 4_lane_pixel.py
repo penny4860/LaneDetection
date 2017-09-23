@@ -3,11 +3,12 @@
 import matplotlib.pyplot as plt
 from detector.lane import LanePixelDetector
 from detector.cal import DistortionCorrector
-from detector.binary import plot_images
+from detector.imutils import plot_images
 import cv2
 import numpy as np
 
-from detector.binary import Binarizer, region_of_interest, image_closing
+from detector.binary import SchannelBin
+from detector.imutils import closing
 
 np.set_printoptions(linewidth=500000)
 
@@ -25,8 +26,11 @@ if __name__ == "__main__":
         img = corrector.run(img)
         
         edges = cv2.Canny(img,50,200)
-        binary_img = Binarizer.intensity(region_of_interest(img), (48, 255))
-        binary_img = image_closing(binary_img)
+        
+        binarizer = SchannelBin()
+        binary_img = binarizer.run(img, (48, 255))
+        binary_img = binarizer.roi_mask(binary_img)
+        binary_img = closing(binary_img)
 
         lane_map = detector.run(edges, binary_img)
 
