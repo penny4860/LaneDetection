@@ -139,12 +139,12 @@ class LaneDetector(object):
 
 
 if __name__ == "__main__":
-    from detector.imutils import plot_images, closing
-    from detector.binary import SchannelBin
-    from detector.edge import CannyEdgeExtractor
+    from detector.imutils import plot_images
+    from detector.lane.binary import SchannelBin
+    from detector.lane.edge import CannyEdgeExtractor
     from detector.mask import LaneImageMask
     
-    corrector = DistortionCorrector.from_pkl("..//dataset//distortion_corrector.pkl")
+    corrector = DistortionCorrector.from_pkl("..//..//dataset//distortion_corrector.pkl")
 
 #     combined = np.zeros_like(img)
 #     combined[:,:,0] += edges
@@ -159,7 +159,7 @@ if __name__ == "__main__":
 
     # 1. Distortion Correction
     import glob
-    files = glob.glob('..//test_images//*.jpg')
+    files = glob.glob('..//..//test_images//*.jpg')
     for filename in files[:1]:
         img = plt.imread(filename)
         img = corrector.run(img)
