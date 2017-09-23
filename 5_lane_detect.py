@@ -30,7 +30,11 @@ class LaneCurveFit(object):
         rightx_base = np.argmax(histogram[midpoint:]) + midpoint
         return leftx_base, rightx_base
 
-    def _run_sliding_window(self, leftx_base, rightx_base, nwindows=9, margin=150, minpix=10):
+    def _run_sliding_window(self, nwindows=9, margin=150, minpix=10):
+        
+        roi = self._get_roi(self._lane_map)
+        leftx_base, rightx_base = self._get_base(roi)
+        
         lane_map = self._lane_map
         
         # Choose the number of sliding windows
@@ -94,12 +98,8 @@ class LaneCurveFit(object):
         # 1. Create an output image to draw on and  visualize the result
         self._out_img = np.dstack((lane_map, lane_map, lane_map)).astype(np.uint8)
     
-        # 2. Get Histogram
-        roi = self._get_roi(lane_map)
-        leftx_base, rightx_base = self._get_base(roi)
-        
-        # 3. Step through the windows one by one
-        left_lane_inds, right_lane_inds, nonzerox, nonzeroy = self._run_sliding_window(leftx_base, rightx_base)
+        # 2. Step through the windows one by one
+        left_lane_inds, right_lane_inds, nonzerox, nonzeroy = self._run_sliding_window()
                 
         left_lane_inds = np.concatenate(left_lane_inds)
         right_lane_inds = np.concatenate(right_lane_inds)
