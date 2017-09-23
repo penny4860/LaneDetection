@@ -202,31 +202,16 @@ def run_framework(image):
     return lane_map
 
 
-def generate_pts(out_img, fitter):
-    ploty = np.linspace(0, out_img.shape[0]-1, out_img.shape[0] )
-    left_fitx = fitter._left_fit[0]*ploty**2 + fitter._left_fit[1]*ploty + fitter._left_fit[2]
-    right_fitx = fitter._right_fit[0]*ploty**2 + fitter._right_fit[1]*ploty + fitter._right_fit[2]
-    return ploty, left_fitx, right_fitx
 
-if __name__ == "__main__":
 
-    # 1. Get bird eye's view lane map
-    img = plt.imread('test_images/straight_lines1.jpg')
-    img = plt.imread('test_images/test2.jpg')
-    
+def draw_lane_area(image, fitter, Minv):
+    def generate_pts(image, fitter):
+        ploty = np.linspace(0, image.shape[0]-1, image.shape[0] )
+        left_fitx = fitter._left_fit[0]*ploty**2 + fitter._left_fit[1]*ploty + fitter._left_fit[2]
+        right_fitx = fitter._right_fit[0]*ploty**2 + fitter._right_fit[1]*ploty + fitter._right_fit[2]
+        return ploty, left_fitx, right_fitx
 
-    lane_map_ipt = run_framework(img)
-    fitter = LaneCurveFit()
-    out_img = fitter.run(lane_map_ipt)
-    fitter.calc_curvature()
-    fitter.plot(out_img)
-    
-    # 1. Get fitting curve polynomial
-    ploty, left_fitx, right_fitx = generate_pts(out_img, fitter)
-    Minv = PerspectTrans.from_pkl('dataset/perspective_trans.pkl')._Minv
-    image = img
-    
-    # Create an image to draw the lines on
+    ploty, left_fitx, right_fitx = generate_pts(image, fitter)
     color_warp = np.zeros_like(img).astype(np.uint8)
     # Recast the x and y points into usable format for cv2.fillPoly()
     pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
@@ -238,9 +223,6 @@ if __name__ == "__main__":
     
     # Warp the blank back to original image space using inverse perspective matrix (Minv)
     newwarp = cv2.warpPerspective(color_warp, Minv, (image.shape[1], image.shape[0]))
-    
-    # plot_images([img, newwarp], ["original", "new"])
-    
     corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
     undist = corrector.run(image)
 
@@ -248,6 +230,22 @@ if __name__ == "__main__":
     result = cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
     plt.imshow(result)
     plt.show()
+
+
+if __name__ == "__main__":
+
+    # 1. Get bird eye's view lane map
+    img = plt.imread('test_images/straight_lines1.jpg')
+    img = plt.imread('test_images/test6.jpg')
+    
+
+    lane_map_ipt = run_framework(img)
+    fitter = LaneCurveFit()
+    out_img = fitter.run(lane_map_ipt)
+    fitter.calc_curvature()
+    fitter.plot(out_img)
+    
+    draw_lane_area(img, fitter, PerspectTrans.from_pkl('dataset/perspective_trans.pkl')._Minv)
     
     
     
