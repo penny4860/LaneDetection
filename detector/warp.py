@@ -2,7 +2,6 @@
 
 import numpy as np
 import cv2
-import pickle
 
 
 class PerspectTrans(object):
@@ -33,12 +32,3 @@ class PerspectTrans(object):
         warped = cv2.warpPerspective(image, self._M, (w, h), flags=cv2.INTER_LINEAR)
         return warped
     
-    def to_pkl(self, filename):
-        with open(filename, 'wb') as f:
-            pickle.dump(self, f)
-        
-    @classmethod
-    def from_pkl(cls, filename):
-        with open(filename, 'rb') as f:
-            instance = pickle.load(f)
-        return instance
