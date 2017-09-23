@@ -21,10 +21,12 @@ class LaneDetector(object):
     _VALID_PIXEL = 255
     
     def __init__(self, edge_detector, binary_extractor, image_mask):
+        # Instance injected from outside
         self._edge_detector = edge_detector
         self._bin_extractor = binary_extractor
         self._img_mask = image_mask
         
+        # Instance created internally
         self._edge_dist_calc = EdgeDistanceCalculator()
         self._mid_edge_calc = MidTwoEdges()
      
