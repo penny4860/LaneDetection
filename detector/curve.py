@@ -4,7 +4,6 @@ import matplotlib.pyplot as plt
 from detector.cal import DistortionCorrector
 from detector.warp import PerspectTrans
 import cv2
-from detector.imutils import plot_images
 from detector.lane import LanePixelDetector
 from detector.binary import SchannelBin
 from detector.imutils import closing
@@ -178,7 +177,7 @@ def add_square_feature(X):
 
 
 def run_framework(image):
-    corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
+    corrector = DistortionCorrector.from_pkl("..//dataset//distortion_corrector.pkl")
     detector = LanePixelDetector()
     binarizer = SchannelBin()
 
@@ -197,7 +196,7 @@ def run_framework(image):
     lane_map = detector.run(edges, binary_img)
     
     # 5. Perspective tranfrom to make bird eye's view
-    translator = PerspectTrans.from_pkl('dataset/perspective_trans.pkl')
+    translator = PerspectTrans.from_pkl('..//dataset/perspective_trans.pkl')
     lane_map = translator.run(lane_map)
     return lane_map
 
@@ -223,7 +222,7 @@ def draw_lane_area(image, fitter, Minv):
     
     # Warp the blank back to original image space using inverse perspective matrix (Minv)
     newwarp = cv2.warpPerspective(color_warp, Minv, (image.shape[1], image.shape[0]))
-    corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
+    corrector = DistortionCorrector.from_pkl("..//dataset//distortion_corrector.pkl")
     undist = corrector.run(image)
 
     # Combine the result with the original image
@@ -235,8 +234,8 @@ def draw_lane_area(image, fitter, Minv):
 if __name__ == "__main__":
 
     # 1. Get bird eye's view lane map
-    img = plt.imread('test_images/straight_lines1.jpg')
-    img = plt.imread('test_images/test6.jpg')
+    img = plt.imread('../test_images/straight_lines1.jpg')
+    img = plt.imread('../test_images/test6.jpg')
     
 
     lane_map_ipt = run_framework(img)
@@ -245,7 +244,7 @@ if __name__ == "__main__":
     fitter.calc_curvature()
     fitter.plot(out_img)
     
-    draw_lane_area(img, fitter, PerspectTrans.from_pkl('dataset/perspective_trans.pkl')._Minv)
+    draw_lane_area(img, fitter, PerspectTrans.from_pkl('../dataset/perspective_trans.pkl')._Minv)
     
     
     
