@@ -24,6 +24,9 @@ class LaneDetector(object):
         self._edge_detector = edge_detector
         self._bin_extractor = binary_extractor
         self._img_mask = image_mask
+        
+        self._edge_dist_calc = EdgeDistanceCalculator()
+        self._mid_edge_calc = MidTwoEdges()
      
     def run(self, image):
         """
@@ -42,49 +45,18 @@ class LaneDetector(object):
         # binary_img = closing(binary_img)
         
         # 1. For the binary image, get the right & left edge distance map
-        r_dist_map, l_dist_map = self._get_dist_map(edge_map, binary_roi)
+        r_dist_map, l_dist_map = self._edge_dist_calc.run(edge_map, binary_roi)
 
-        # 2. Get the lane map
-        lane_map = self._get_lane_map(r_dist_map, l_dist_map)
-
-        # 3. Extend lane pixels
-        lane_map = self._extend_lane_pixels(lane_map, r_dist_map, l_dist_map)
+        # 2. Get middle pixels of two edges
+        lane_map = self._mid_edge_calc.run(r_dist_map, l_dist_map)
         return lane_map
 
-    def _get_lane_map(self, right_dist_map, left_dist_map):
-        """Get lane pixel map
-        
-        # Args
-            right_dist_map
-            left_dist_map
-        
-        # Returns
-            lane_map : 2d array
-        """
-        # Todo : image의 row 위치에 따라서 r_dist_map+l_dist_map threshold 를 linear 하게 적용하자.
-        WIDTH_THD = 30
-        lane_map = np.zeros_like(right_dist_map)
 
-        # Get mid-point from right & left edge pixels, 
-        # and if its width is smaller than threshold,
-        lane_map[(abs(right_dist_map - left_dist_map) <= 3) & 
-                 (right_dist_map > 0) & 
-                 (left_dist_map > 0) & 
-                 (right_dist_map+left_dist_map < WIDTH_THD)] = self._VALID_PIXEL
-        return lane_map
-
-    def _extend_lane_pixels(self, lane_map, right_dist_map, left_dist_map):
-        """Extend lane pixels to its nearset edge"""
-        
-        lane_pixels = np.where(lane_map == self._VALID_PIXEL)
-        for r, c in zip(lane_pixels[0], lane_pixels[1]):
-            right_dist = int(right_dist_map[r, c])
-            left_dist = int(left_dist_map[r, c])
-            lane_map[r, c:c+right_dist] = self._VALID_PIXEL
-            lane_map[r, c-left_dist+1:c] = self._VALID_PIXEL
-        return lane_map
-
-    def _get_dist_map(self, edge_map, binary_map):
+class EdgeDistanceCalculator(object):
+    def __init__(self):
+        pass
+    
+    def run(self, edge_map, binary_map):
         """For the bright pixels get the nearest edge distance.
 
         # Args
@@ -136,6 +108,52 @@ class LaneDetector(object):
         else:
             dist = indices[0]
         return dist
+
+# Center of both edges
+class MidTwoEdges(object):
+    
+    _VALID_PIXEL = 255
+    
+    def __init__(self, width_thd=30 , mid_point_thd=3):
+        self._width_thd = width_thd
+        self._mid_point_thd = mid_point_thd
+    
+    def run(self, right_dist_map, left_dist_map):
+        mid_of_edges = self._get_mid_of_edges(right_dist_map, left_dist_map)
+        extended_mids = self._extend_mid_to_edges(mid_of_edges, right_dist_map, left_dist_map)
+        return extended_mids
+        
+    def _get_mid_of_edges(self, right_dist_map, left_dist_map):
+        """Get middle point pixels of right & left edges
+        
+        # Args
+            right_dist_map : 2d array
+            left_dist_map : 2d array
+        
+        # Returns
+            lane_map : 2d array
+        """
+        # Todo : image의 row 위치에 따라서 r_dist_map+l_dist_map threshold 를 linear 하게 적용하자.
+        mid_of_edges = np.zeros_like(right_dist_map)
+
+        # Get mid-point from right & left edge pixels, 
+        # and if its width is smaller than threshold,
+        mid_of_edges[(abs(right_dist_map - left_dist_map) <= self._mid_point_thd) & 
+                 (right_dist_map > 0) & 
+                 (left_dist_map > 0) & 
+                 (right_dist_map+left_dist_map < self._width_thd)] = self._VALID_PIXEL
+        return mid_of_edges
+
+    def _extend_mid_to_edges(self, lane_map, right_dist_map, left_dist_map):
+        """Extend mid pixels to its nearset edge"""
+        
+        lane_pixels = np.where(lane_map == self._VALID_PIXEL)
+        for r, c in zip(lane_pixels[0], lane_pixels[1]):
+            right_dist = int(right_dist_map[r, c])
+            left_dist = int(left_dist_map[r, c])
+            lane_map[r, c:c+right_dist] = self._VALID_PIXEL
+            lane_map[r, c-left_dist+1:c] = self._VALID_PIXEL
+        return lane_map
 
 
 if __name__ == "__main__":
