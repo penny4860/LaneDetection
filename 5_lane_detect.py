@@ -11,6 +11,7 @@ from detector.imutils import closing
 
 # test5.jpg
 import numpy as np
+from test.test_venv import failsOnWindows
 np.set_printoptions(linewidth=1000, edgeitems=1000)
 
 
@@ -27,16 +28,12 @@ class LaneCurveFit(object):
         rightx_base = np.argmax(histogram[midpoint:]) + midpoint
         return leftx_base, rightx_base
 
-    def _run_sliding_window(self, nwindows=9, margin=150, minpix=10):
-        
+    def _get_start_window(self, nwindows):
         leftx_base, rightx_base = self._get_base(self._lane_map)
-        lane_map = self._lane_map
-        
-        # Choose the number of sliding windows
         # Set height of windows
-        window_height = np.int(lane_map.shape[0]/nwindows)
+        window_height = np.int(self._lane_map.shape[0]/nwindows)
         # Identify the x and y positions of all nonzero pixels in the image
-        nonzero = lane_map.nonzero()
+        nonzero = self._lane_map.nonzero()
         nonzeroy = np.array(nonzero[0])
         nonzerox = np.array(nonzero[1])
         # Current positions to be updated for each window
@@ -46,6 +43,12 @@ class LaneCurveFit(object):
         # Create empty lists to receive left and right lane pixel indices
         left_lane_inds = []
         right_lane_inds = []
+        return window_height, nonzerox, nonzeroy, leftx_current, rightx_current, left_lane_inds, right_lane_inds
+
+    def _run_sliding_window(self, nwindows=9, margin=150, minpix=10):
+        
+        window_height, nonzerox, nonzeroy, leftx_current, rightx_current, left_lane_inds, right_lane_inds = self._get_start_window(nwindows)
+        lane_map = self._lane_map
 
         # Step through the windows one by one
         for window in range(nwindows):
@@ -57,10 +60,8 @@ class LaneCurveFit(object):
             win_xright_low = rightx_current - margin
             win_xright_high = rightx_current + margin
             # Draw the windows on the visualization image
-            cv2.rectangle(self._out_img,(win_xleft_low,win_y_low),(win_xleft_high,win_y_high),
-            (0,255,0), 2) 
-            cv2.rectangle(self._out_img,(win_xright_low,win_y_low),(win_xright_high,win_y_high),
-            (0,255,0), 2) 
+            cv2.rectangle(self._out_img,(win_xleft_low,win_y_low),(win_xleft_high,win_y_high), (0,255,0), 2) 
+            cv2.rectangle(self._out_img,(win_xright_low,win_y_low),(win_xright_high,win_y_high), (0,255,0), 2) 
             # Identify the nonzero pixels in x and y within the window
             good_left_inds = ((nonzeroy >= win_y_low) & (nonzeroy < win_y_high) & 
             (nonzerox >= win_xleft_low) &  (nonzerox < win_xleft_high)).nonzero()[0]
