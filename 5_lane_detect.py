@@ -17,12 +17,9 @@ np.set_printoptions(linewidth=1000, edgeitems=1000)
 class LaneCurveFit(object):
     def __init__(self):
         pass
-    
-    def _get_roi(self, image):
-        # bottom half of the image
-        return image[image.shape[0]//2:,:]
 
-    def _get_base(self, roi):
+    def _get_base(self, image):
+        roi = image[image.shape[0]//2:,:]
         histogram = np.sum(roi, axis=0)
 
         midpoint = np.int(histogram.shape[0]/2)
@@ -32,9 +29,7 @@ class LaneCurveFit(object):
 
     def _run_sliding_window(self, nwindows=9, margin=150, minpix=10):
         
-        roi = self._get_roi(self._lane_map)
-        leftx_base, rightx_base = self._get_base(roi)
-        
+        leftx_base, rightx_base = self._get_base(self._lane_map)
         lane_map = self._lane_map
         
         # Choose the number of sliding windows
@@ -79,6 +74,9 @@ class LaneCurveFit(object):
                 leftx_current = np.int(np.mean(nonzerox[good_left_inds]))
             if len(good_right_inds) > minpix:        
                 rightx_current = np.int(np.mean(nonzerox[good_right_inds]))
+                
+        left_lane_inds = np.concatenate(left_lane_inds)
+        right_lane_inds = np.concatenate(right_lane_inds)
         return left_lane_inds, right_lane_inds, nonzerox, nonzeroy
     
     def run(self, lane_map):
@@ -100,9 +98,6 @@ class LaneCurveFit(object):
     
         # 2. Step through the windows one by one
         left_lane_inds, right_lane_inds, nonzerox, nonzeroy = self._run_sliding_window()
-                
-        left_lane_inds = np.concatenate(left_lane_inds)
-        right_lane_inds = np.concatenate(right_lane_inds)
         
         # 4. Fit curve
         left_fit, right_fit = self._fit_curve(left_lane_inds, right_lane_inds, nonzerox, nonzeroy)
