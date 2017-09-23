@@ -30,7 +30,7 @@ class LaneDetector(object):
         self._edge_dist_calc = EdgeDistanceCalculator()
         self._mid_edge_calc = MidTwoEdges()
      
-    def run(self, image):
+    def run(self, image, plot=False):
         """
         # Args
             image : 3d array
@@ -51,8 +51,29 @@ class LaneDetector(object):
 
         # 2. Get middle pixels of two edges
         lane_map = self._mid_edge_calc.run(r_dist_map, l_dist_map)
+        
+        if plot:
+            self._show_process(image, edge_map, binary_roi, lane_map)
+        
         return lane_map
 
+    def _show_process(self, img, edge_map, binary, lane):
+        def _plot_images(images, titles):
+            _, axes = plt.subplots(1, len(images), figsize=(10,10))
+            for img, ax, text in zip(images, axes, titles):
+                ax.imshow(img, cmap="gray")
+                ax.set_title(text, fontsize=30)
+            plt.show()
+
+        combined = np.zeros_like(img)
+        combined[:,:,0] += edge_map
+        combined[:,:,2] += binary
+
+        # original / binary / edge / combined / lane
+        _plot_images([img, combined, lane], ["input", "binary(Blue) & edge(Red)", "lane"])
+        
+
+        
 
 class EdgeDistanceCalculator(object):
     def __init__(self):
@@ -166,11 +187,6 @@ if __name__ == "__main__":
     
     corrector = DistortionCorrector.from_pkl("..//..//dataset//distortion_corrector.pkl")
 
-#     combined = np.zeros_like(img)
-#     combined[:,:,0] += edges
-#     combined[:,:,2] += binary_img
-#     combined = region_of_interest(combined)
-
     _edge_detector = CannyEdgeExtractor(50, 200)
     _binary_extractor = SchannelBin((48, 255))
     _image_mask = LaneImageMask()
@@ -180,12 +196,9 @@ if __name__ == "__main__":
     # 1. Distortion Correction
     import glob
     files = glob.glob('..//..//test_images//*.jpg')
-    for filename in files[:1]:
+    for filename in files[:-1]:
         img = plt.imread(filename)
         img = corrector.run(img)
         
-        lane_map = detector.run(img)
-        plot_images([img, lane_map],
-                    ["original : {}".format(filename), "lane_map"])
-
+        lane_map = detector.run(img, True)
 
