@@ -2,10 +2,12 @@
 
 import matplotlib.pyplot as plt
 from detector.cal import DistortionCorrector
-from detector.binary import thresholding, plot_images
 from detector.warp import PerspectTrans
 import cv2
-from detector.lane import run
+from detector.imutils import plot_images
+from detector.lane import LanePixelDetector
+from detector.binary import SchannelBin
+from detector.imutils import closing
 
 # test5.jpg
 import numpy as np
@@ -26,18 +28,35 @@ def add_square_feature(X):
     return X
 
 
-if __name__ == "__main__":
-    # 1. Distortion Correction
+def run_framework(image):
     corrector = DistortionCorrector.from_pkl("dataset//distortion_corrector.pkl")
+    detector = LanePixelDetector()
+    binarizer = SchannelBin()
+
+    # 1. distortion correction    
+    image = corrector.run(image)
+    
+    # 2. edge
+    edges = cv2.Canny(image, 50, 200)
+    
+    # 3. binary
+    binary_img = binarizer.run(img, (48, 255))
+    binary_img = binarizer.roi_mask(binary_img)
+    binary_img = closing(binary_img)
+
+    # 4. lane map
+    lane_map = detector.run(edges, binary_img)
+    return lane_map
+
+if __name__ == "__main__":
+
 
     # 2. Thresholding
     img = plt.imread('test_images/test1.jpg')
-    # img = corrector.run(img)
-    img, bin, edges, combined, lane_map = run(img)
+    lane_map = run_framework(img)
     
-    translator = PerspectTrans.from_pkl("dataset//perspective_trans.pkl")
+    translator = PerspectTrans()
     binary_warped = translator.run(lane_map)
-
     plot_images([img, binary_warped, lane_map],
                 ["original", "thresholded", "lane_map"])
 
