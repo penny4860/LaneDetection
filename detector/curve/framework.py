@@ -6,30 +6,43 @@ from detector.curve.fit import SlidingWindow, LaneCurveFit
 
 class LaneFitFramework(object):
     
-    def __init__(self, warper=LaneWarper(), window=SlidingWindow(), fitter=LaneCurveFit()):
+    def __init__(self, warper=LaneWarper(), window=SlidingWindow(), fitter=LaneCurveFit(), curv = Curvature()):
         self._warper = warper
         self._window = window
         self._fitter = fitter
-    
-    def run(self, lane_map):
-        warper = LaneWarper()
-        lane_map_ipt = warper.forward(lane_map)
-    
-        win = SlidingWindow()
-        out_img, left_pixels, right_pixels = win.run(lane_map_ipt)
-        fitter = LaneCurveFit()
-        fitter.run(left_pixels, right_pixels)
-        fitter.plot(out_img, left_pixels, right_pixels)
-         
-        curv = Curvature()
-        l, r = curv.calc(left_pixels, right_pixels)
-        print(l, 'm', r, 'm')
+        self._curv = curv
         
-        marker = LaneMarker(warper)
-        marker.run(undist_img, fitter._left_fit, fitter._right_fit)
+        # left / right curvature
+        self.curvature = (None, None)
+        
+    def run(self, undist_img, lane_map, plot=False):
+        
+        # 1. Do perspective transform to make bird eyes view image
+        lane_map_ipt = self._warper.forward(lane_map)
+
+        # 2. Get lane pixels to fit lane curve    
+        out_img, left_pixels, right_pixels = self._window.run(lane_map_ipt)
+
+        # 3. Fit lane curve
+        self._fitter.run(left_pixels, right_pixels)
+
+        # 4. Calc curvature in meter unit         
+        self.curvature = self._curv.calc(left_pixels, right_pixels)
+
+        # 5. Mark lane area in original image        
+        marker = LaneMarker(self._warper)
+        marked_image = marker.run(undist_img, self._fitter._left_fit, self._fitter._right_fit)
+        
+        if plot:
+            self._show_process(out_img, marked_image, left_pixels, right_pixels)
+        return marked_image
     
-    def _show_process(self):
-        pass
+    def _show_process(self, out_img, marked_image, left_pixels, right_pixels):
+        # Todo : code cleaning
+        self._fitter.plot(out_img, left_pixels, right_pixels)
+        
+        plt.imshow(marked_image)
+        plt.show()
 
 
 if __name__ == "__main__":
@@ -57,20 +70,5 @@ if __name__ == "__main__":
     
     #####################################################################################
     frm = LaneFitFramework()
-    frm.run(lane_map)
+    frm.run(undist_img, lane_map, True)
     
-#     warper = LaneWarper()
-#     lane_map_ipt = warper.forward(lane_map)
-# 
-#     win = SlidingWindow()
-#     out_img, left_pixels, right_pixels = win.run(lane_map_ipt)
-#     fitter = LaneCurveFit()
-#     fitter.run(left_pixels, right_pixels)
-#     fitter.plot(out_img, left_pixels, right_pixels)
-#      
-#     curv = Curvature()
-#     l, r = curv.calc(left_pixels, right_pixels)
-#     print(l, 'm', r, 'm')
-#     
-#     marker = LaneMarker(warper)
-#     marker.run(undist_img, fitter._left_fit, fitter._right_fit)
