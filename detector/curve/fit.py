@@ -9,7 +9,9 @@ import numpy as np
 np.set_printoptions(linewidth=1000, edgeitems=1000)
 
 
-class LaneCurveFit(object):
+
+class SlidingWindow(object):
+    
     def __init__(self):
         pass
 
@@ -18,12 +20,6 @@ class LaneCurveFit(object):
         # Args
             lane_map : array
                 bird eye's view binary image
-            nwindows : int
-                number of windows
-            margin : int
-                the width of the windows +/- margin
-            minpix : int
-                minimum number of pixels found to recenter window
         """
         self._lane_map = lane_map
         
@@ -32,26 +28,7 @@ class LaneCurveFit(object):
     
         # 2. Step through the windows one by one
         left_lane_inds, right_lane_inds, nonzerox, nonzeroy = self._run_sliding_window()
-        
-        # 4. Fit curve
-        left_fit, right_fit = self._fit_curve(left_lane_inds, right_lane_inds, nonzerox, nonzeroy)
-        
-        self._left_lane_inds = left_lane_inds
-        self._right_lane_inds = right_lane_inds
-        self._nonzerox = nonzerox
-        self._nonzeroy = nonzeroy
-        self._left_fit = left_fit
-        self._right_fit = right_fit
-        return self._out_img
-
-    def _get_base(self, image):
-        roi = image[image.shape[0]//2:,:]
-        histogram = np.sum(roi, axis=0)
-
-        midpoint = np.int(histogram.shape[0]/2)
-        leftx_base = np.argmax(histogram[:midpoint])
-        rightx_base = np.argmax(histogram[midpoint:]) + midpoint
-        return leftx_base, rightx_base
+        return self._out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy
 
     def _get_start_window(self, nwindows):
         leftx_base, rightx_base = self._get_base(self._lane_map)
@@ -69,6 +46,15 @@ class LaneCurveFit(object):
         left_lane_inds = []
         right_lane_inds = []
         return window_height, nonzerox, nonzeroy, leftx_current, rightx_current, left_lane_inds, right_lane_inds
+
+    def _get_base(self, image):
+        roi = image[image.shape[0]//2:,:]
+        histogram = np.sum(roi, axis=0)
+
+        midpoint = np.int(histogram.shape[0]/2)
+        leftx_base = np.argmax(histogram[:midpoint])
+        rightx_base = np.argmax(histogram[midpoint:]) + midpoint
+        return leftx_base, rightx_base
 
     def _run_sliding_window(self, nwindows=9, margin=150, minpix=10):
         
@@ -104,6 +90,35 @@ class LaneCurveFit(object):
         left_lane_inds = np.concatenate(left_lane_inds)
         right_lane_inds = np.concatenate(right_lane_inds)
         return left_lane_inds, right_lane_inds, nonzerox, nonzeroy
+
+
+class LaneCurveFit(object):
+    def __init__(self):
+        pass
+
+    def run(self, lane_map, left_lane_inds, right_lane_inds, nonzerox, nonzeroy):
+        """
+        # Args
+            lane_map : array
+                bird eye's view binary image
+            nwindows : int
+                number of windows
+            margin : int
+                the width of the windows +/- margin
+            minpix : int
+                minimum number of pixels found to recenter window
+        """
+        self._lane_map = lane_map
+        
+        # 4. Fit curve
+        left_fit, right_fit = self._fit_curve(left_lane_inds, right_lane_inds, nonzerox, nonzeroy)
+        
+        self._left_lane_inds = left_lane_inds
+        self._right_lane_inds = right_lane_inds
+        self._nonzerox = nonzerox
+        self._nonzeroy = nonzeroy
+        self._left_fit = left_fit
+        self._right_fit = right_fit
 
     def plot(self, out_img):
         # Generate x and y values for plotting
@@ -223,9 +238,13 @@ if __name__ == "__main__":
     from detector.curve.warp import LaneWarper
     warper = LaneWarper()
     lane_map_ipt = warper.forward(lane_map)
+
+
+    win = SlidingWindow()
+    out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy = win.run(lane_map_ipt)
     
     fitter = LaneCurveFit()
-    out_img = fitter.run(lane_map_ipt)
+    fitter.run(lane_map_ipt, left_lane_inds, right_lane_inds, nonzerox, nonzeroy)
     fitter.calc_curvature()
     fitter.plot(out_img)
     draw_lane_area(img, fitter, warper._Minv, corrector)
