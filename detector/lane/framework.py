@@ -4,10 +4,9 @@ import matplotlib.pyplot as plt
 import cv2
 import numpy as np
 
-from detector.lane.lane import EdgeDistanceCalculator, MidTwoEdges
 from detector.cal import DistortionCorrector
 from detector.lane.binary import SchannelBin
-from detector.lane.edge import CannyEdgeExtractor
+from detector.lane.edge import CannyEdgeExtractor, EdgeDistanceCalculator, MidTwoEdges
 from detector.lane.mask import LaneImageMask
 
 
