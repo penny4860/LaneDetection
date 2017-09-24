@@ -56,19 +56,13 @@ if __name__ == "__main__":
     corrector = DistortionCorrector.from_pkl("..//..//dataset//distortion_corrector.pkl")
 
     # lane_map_ipt = run_framework(img)
-    from detector.lane.lane import LaneDetector
-    from detector.lane.edge import CannyEdgeExtractor
-    from detector.lane.mask import LaneImageMask
-    from detector.lane.binary import SchannelBin
-    _edge_detector = CannyEdgeExtractor(50, 200)
-    _binary_extractor = SchannelBin((48, 255))
-    _image_mask = LaneImageMask()
-    detector = LaneDetector(_edge_detector, _binary_extractor, _image_mask)
+    from detector.lane.framework import LaneDetectionFramework
+    frm1 = LaneDetectionFramework()
 
+    # 1. correction
     undist_img = corrector.run(img)
-    lane_map = detector.run(undist_img)
-    
+    lane_map = frm1.run(undist_img)
     #####################################################################################
-    frm = LaneFitFramework()
-    frm.run(undist_img, lane_map, True)
+    frm2 = LaneFitFramework()
+    frm2.run(undist_img, lane_map, True)
     
