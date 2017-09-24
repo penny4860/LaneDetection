@@ -6,8 +6,6 @@ import cv2
 
 # test5.jpg
 import numpy as np
-np.set_printoptions(linewidth=1000, edgeitems=1000)
-
 
 
 class SlidingWindow(object):
@@ -20,6 +18,11 @@ class SlidingWindow(object):
         # Args
             lane_map : array
                 bird eye's view binary image
+                
+        # Returns
+            out_img
+            left_pixels
+            right_pixels
         """
         self._lane_map = lane_map
         
@@ -28,7 +31,15 @@ class SlidingWindow(object):
     
         # 2. Step through the windows one by one
         left_lane_inds, right_lane_inds, nonzerox, nonzeroy = self._run_sliding_window()
-        return self._out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy
+        
+        leftx = nonzerox[left_lane_inds]
+        lefty = nonzeroy[left_lane_inds] 
+        rightx = nonzerox[right_lane_inds]
+        righty = nonzeroy[right_lane_inds] 
+        
+        left_pixels = np.concatenate([leftx.reshape(-1,1), lefty.reshape(-1,1)], axis=1)
+        right_pixels = np.concatenate([rightx.reshape(-1,1), righty.reshape(-1,1)], axis=1)
+        return self._out_img, left_pixels, right_pixels
 
     def _get_start_window(self, nwindows):
         leftx_base, rightx_base = self._get_base(self._lane_map)
@@ -96,7 +107,7 @@ class LaneCurveFit(object):
     def __init__(self):
         pass
 
-    def run(self, left_lane_inds, right_lane_inds, nonzerox, nonzeroy):
+    def run(self, left_pixels, right_pixels):
         """
         # Args
             lane_map : array
@@ -108,77 +119,65 @@ class LaneCurveFit(object):
             minpix : int
                 minimum number of pixels found to recenter window
         """
-        # 4. Fit curve
-        left_fit, right_fit = self._fit_curve(left_lane_inds, right_lane_inds, nonzerox, nonzeroy)
-        
-        self._left_lane_inds = left_lane_inds
-        self._right_lane_inds = right_lane_inds
-        self._nonzerox = nonzerox
-        self._nonzeroy = nonzeroy
-        self._left_fit = left_fit
-        self._right_fit = right_fit
+        left_x = left_pixels[:, 0]
+        left_y = left_pixels[:, 1]
 
-    def plot(self, out_img):
+        right_x = right_pixels[:, 0]
+        right_y = right_pixels[:, 1]
+
+        # Fit a second order polynomial to each
+        self._left_fit = np.polyfit(left_y, left_x, 2)
+        self._right_fit = np.polyfit(right_y, right_x, 2)
+        
+
+    def plot(self, out_img, left_pixels, right_pixels):
         # Generate x and y values for plotting
         ploty = np.linspace(0, out_img.shape[0]-1, out_img.shape[0] )
         left_fitx = self._left_fit[0]*ploty**2 + self._left_fit[1]*ploty + self._left_fit[2]
         right_fitx = self._right_fit[0]*ploty**2 + self._right_fit[1]*ploty + self._right_fit[2]
          
-        out_img[self._nonzeroy[self._left_lane_inds], self._nonzerox[self._left_lane_inds]] = [255, 0, 0]
-        out_img[self._nonzeroy[self._right_lane_inds], self._nonzerox[self._right_lane_inds]] = [0, 0, 255]
+        out_img[left_pixels[:, 1], left_pixels[:, 0]] = [255, 0, 0]
+        out_img[right_pixels[:, 1], right_pixels[:, 0]] = [0, 0, 255]
         plt.imshow(out_img)
         plt.plot(left_fitx, ploty, color='yellow')
         plt.plot(right_fitx, ploty, color='yellow')
         plt.xlim(0, 1280)
         plt.ylim(720, 0)
-         
         plt.show()
 
-    def _fit_curve(self, left_lane_inds, right_lane_inds, nonzerox, nonzeroy):
-        #     from sklearn import linear_model
-        #     ransac = linear_model.RANSACRegressor()
-        #     ransac.fit(add_square_feature(righty), rightx)
-        #     
-        #     right_fit = ransac.estimator_.coef_.tolist()
-        #     right_fit.append(ransac.estimator_.intercept_)
-        # Concatenate the arrays of indices
-    
-        # Extract left and right line pixel positions
-        leftx = nonzerox[left_lane_inds]
-        lefty = nonzeroy[left_lane_inds] 
-        rightx = nonzerox[right_lane_inds]
-        righty = nonzeroy[right_lane_inds] 
-         
-        # Fit a second order polynomial to each
-        left_fit = np.polyfit(lefty, leftx, 2)
-        right_fit = np.polyfit(righty, rightx, 2)
-        
-        self._leftx = leftx
-        self._lefty = lefty
-        self._rightx = rightx
-        self._righty = righty
-        return left_fit, right_fit
 
-    def calc_curvature(self):
+class Curvature(object):
+
+    def __init__(self, xm_per_pix=3.7/700, ym_per_pix=30/720):
+        # meters per pixel in x, y dimension
+        self._xm_per_pix = xm_per_pix 
+        self._ym_per_pix = ym_per_pix 
+
+    def calc(self, left_pixels, right_pixels):
         def _calc(y_eval, coef):
             curverad = ((1 + (2*coef[0]*y_eval + coef[1])**2)**1.5) / np.absolute(2*coef[0])
             return curverad
-        
-        ym_per_pix = 30/720 # meters per pixel in y dimension
-        xm_per_pix = 3.7/700 # meters per pixel in x dimension
-        # 2. Fit new polynomials to x,y in world space
-        left_fit = np.polyfit(self._lefty*ym_per_pix, self._leftx*xm_per_pix, 2)
-        right_fit = np.polyfit(self._righty*ym_per_pix, self._rightx*xm_per_pix, 2)
 
+        left_meters = self._pixel_to_meters(left_pixels)
+        right_meters = self._pixel_to_meters(right_pixels)
 
-        # 3. Calculate the new radii of curvature
-        left_curverad = _calc(np.max(self._lefty*ym_per_pix), left_fit)
-        right_curverad = _calc(np.max(self._righty*ym_per_pix), right_fit)
-        
-        # Now our radius of curvature is in meters
-        print(left_curverad, 'm', right_curverad, 'm')
+        left_fit = np.polyfit(left_meters[:, 1], left_meters[:, 0], 2)
+        right_fit = np.polyfit(right_meters[:, 1], right_meters[:, 0], 2)
+
+        # Calculate the new radii of curvature : Now our radius of curvature is in meters
+        left_curverad = _calc(np.max(left_meters[:, 1]), left_fit)
+        right_curverad = _calc(np.max(right_meters[:, 1]), right_fit)
         return left_curverad, right_curverad
 
+    def _pixel_to_meters(self, pixels):
+        xs_pixels = pixels[:, 0]
+        ys_pixels = pixels[:, 1]
+        
+        xs_meters = xs_pixels * self._xm_per_pix
+        ys_meters = ys_pixels * self._ym_per_pix
+        
+        meters = np.concatenate([xs_meters.reshape(-1,1), ys_meters.reshape(-1,1)], axis=1)
+        return meters
 
 def add_square_feature(X):
     X = np.concatenate([(X**2).reshape(-1,1), X.reshape(-1,1)], axis=1)
@@ -239,21 +238,19 @@ if __name__ == "__main__":
 
 
     win = SlidingWindow()
-    out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy = win.run(lane_map_ipt)
-    
-    print(left_lane_inds.shape, right_lane_inds.shape, nonzerox.shape, nonzeroy.shape)
-    
+    out_img, left_pixels, right_pixels = win.run(lane_map_ipt)
     fitter = LaneCurveFit()
-    fitter.run(left_lane_inds, right_lane_inds, nonzerox, nonzeroy)
-    fitter.calc_curvature()
-    fitter.plot(out_img)
+    fitter.run(left_pixels, right_pixels)
+    fitter.plot(out_img, left_pixels, right_pixels)
     draw_lane_area(img, fitter, warper._Minv, corrector)
-    
-    
-    
-    
-    
-    
+     
+ 
+     
+    curv = Curvature()
+    l, r = curv.calc(left_pixels, right_pixels)
+    print(l, 'm', r, 'm')
+     
+     
     
     
     
