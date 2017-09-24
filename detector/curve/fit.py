@@ -184,19 +184,14 @@ class LaneMarker(object):
     def __init__(self, warper):
         self._warper = warper
     
-    def run(self, image, left_fit, right_fit):
+    def run(self, image, left_fit, right_fit, plot=False):
         """
         # Args
             image : distortion corrected image
         """
-        def generate_pts(image, left_fit, right_fit):
-            ploty = np.linspace(0, image.shape[0]-1, image.shape[0] )
-            left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
-            right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
-            return ploty, left_fitx, right_fitx
-    
-        ploty, left_fitx, right_fitx = generate_pts(image, left_fit, right_fit)
-        color_warp = np.zeros_like(img).astype(np.uint8)
+        ploty, left_fitx, right_fitx = self._generate_pts(image.shape[0], left_fit, right_fit)
+
+        color_warp = np.zeros_like(image).astype(np.uint8)
         # Recast the x and y points into usable format for cv2.fillPoly()
         pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
         pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
@@ -210,9 +205,16 @@ class LaneMarker(object):
     
         # Combine the result with the original image
         result = cv2.addWeighted(image, 1, newwarp, 0.3, 0)
-        plt.imshow(result)
-        plt.show()
+        if plot:
+            plt.imshow(result)
+            plt.show()
+        return result
 
+    def _generate_pts(self, height, left_curve, right_curve):
+        ys = np.linspace(0, height-1, height)
+        left_xs = left_curve[0]*ys**2 + left_curve[1]*ys + left_curve[2]
+        right_xs = right_curve[0]*ys**2 + right_curve[1]*ys + right_curve[2]
+        return ys, left_xs, right_xs
 
 if __name__ == "__main__":
 
