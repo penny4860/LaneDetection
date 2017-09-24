@@ -5,6 +5,7 @@ import cv2
 import glob
 import matplotlib.pyplot as plt
 import pickle
+import os
 
 
 class DistortionCorrector(object):
@@ -77,7 +78,11 @@ class DistortionCorrector(object):
             pickle.dump(self, f)
         
     @classmethod
-    def from_pkl(cls, filename):
+    def from_pkl(cls, filename=None):
+        # load predefined distortion correction instance        
+        if filename is None:
+            filename = os.path.join(os.path.dirname(__file__), "models", "dist_corrector.pkl")
+        
         with open(filename, 'rb') as f:
             instance = pickle.load(f)
         return instance
