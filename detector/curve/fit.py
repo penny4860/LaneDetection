@@ -179,10 +179,6 @@ class Curvature(object):
         meters = np.concatenate([xs_meters.reshape(-1,1), ys_meters.reshape(-1,1)], axis=1)
         return meters
 
-def add_square_feature(X):
-    X = np.concatenate([(X**2).reshape(-1,1), X.reshape(-1,1)], axis=1)
-    return X
-
 
 def draw_lane_area(image, fitter, Minv, corrector):
     def generate_pts(image, fitter):
