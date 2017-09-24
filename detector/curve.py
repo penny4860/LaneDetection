@@ -3,7 +3,6 @@
 import matplotlib.pyplot as plt
 from detector.cal import DistortionCorrector
 import cv2
-from detector.imutils import closing
 
 # test5.jpg
 import numpy as np
@@ -171,33 +170,6 @@ class LaneCurveFit(object):
 def add_square_feature(X):
     X = np.concatenate([(X**2).reshape(-1,1), X.reshape(-1,1)], axis=1)
     return X
-
-
-def run_framework(image):
-    corrector = DistortionCorrector.from_pkl("..//dataset//distortion_corrector.pkl")
-    detector = LanePixelDetector()
-    binarizer = SchannelBin()
-
-    # 1. distortion correction    
-    image = corrector.run(image)
-    
-    # 2. edge
-    edges = cv2.Canny(image, 50, 200)
-    
-    # 3. binary
-    binary_img = binarizer.run(img, (48, 255))
-    binary_img = binarizer.roi_mask(binary_img)
-    binary_img = closing(binary_img)
-
-    # 4. lane map
-    lane_map = detector.run(edges, binary_img)
-    
-    # 5. Perspective tranfrom to make bird eye's view
-    translator = PerspectTrans.from_pkl('..//dataset/perspective_trans.pkl')
-    lane_map = translator.run(lane_map)
-    return lane_map
-
-
 
 
 def draw_lane_area(image, fitter, Minv):
