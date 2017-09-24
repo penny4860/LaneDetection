@@ -180,31 +180,38 @@ class Curvature(object):
         return meters
 
 
-def draw_lane_area(image, fitter, Minv, corrector):
-    def generate_pts(image, fitter):
-        ploty = np.linspace(0, image.shape[0]-1, image.shape[0] )
-        left_fitx = fitter._left_fit[0]*ploty**2 + fitter._left_fit[1]*ploty + fitter._left_fit[2]
-        right_fitx = fitter._right_fit[0]*ploty**2 + fitter._right_fit[1]*ploty + fitter._right_fit[2]
-        return ploty, left_fitx, right_fitx
-
-    ploty, left_fitx, right_fitx = generate_pts(image, fitter)
-    color_warp = np.zeros_like(img).astype(np.uint8)
-    # Recast the x and y points into usable format for cv2.fillPoly()
-    pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
-    pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
-    pts = np.hstack((pts_left, pts_right))
+class LaneMarker(object):
+    def __init__(self, warper):
+        self._warper = warper
     
-    # Draw the lane onto the warped blank image
-    cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
+    def run(self, image, left_fit, right_fit):
+        """
+        # Args
+            image : distortion corrected image
+        """
+        def generate_pts(image, left_fit, right_fit):
+            ploty = np.linspace(0, image.shape[0]-1, image.shape[0] )
+            left_fitx = left_fit[0]*ploty**2 + left_fit[1]*ploty + left_fit[2]
+            right_fitx = right_fit[0]*ploty**2 + right_fit[1]*ploty + right_fit[2]
+            return ploty, left_fitx, right_fitx
     
-    # Warp the blank back to original image space using inverse perspective matrix (Minv)
-    newwarp = cv2.warpPerspective(color_warp, Minv, (image.shape[1], image.shape[0]))
-    undist = corrector.run(image)
-
-    # Combine the result with the original image
-    result = cv2.addWeighted(undist, 1, newwarp, 0.3, 0)
-    plt.imshow(result)
-    plt.show()
+        ploty, left_fitx, right_fitx = generate_pts(image, left_fit, right_fit)
+        color_warp = np.zeros_like(img).astype(np.uint8)
+        # Recast the x and y points into usable format for cv2.fillPoly()
+        pts_left = np.array([np.transpose(np.vstack([left_fitx, ploty]))])
+        pts_right = np.array([np.flipud(np.transpose(np.vstack([right_fitx, ploty])))])
+        pts = np.hstack((pts_left, pts_right))
+        
+        # Draw the lane onto the warped blank image
+        cv2.fillPoly(color_warp, np.int_([pts]), (0,255, 0))
+        
+        # Warp the blank back to original image space using inverse perspective matrix (Minv)
+        newwarp = self._warper.backward(color_warp)
+    
+        # Combine the result with the original image
+        result = cv2.addWeighted(image, 1, newwarp, 0.3, 0)
+        plt.imshow(result)
+        plt.show()
 
 
 if __name__ == "__main__":
@@ -238,21 +245,13 @@ if __name__ == "__main__":
     fitter = LaneCurveFit()
     fitter.run(left_pixels, right_pixels)
     fitter.plot(out_img, left_pixels, right_pixels)
-    draw_lane_area(img, fitter, warper._Minv, corrector)
-     
- 
      
     curv = Curvature()
     l, r = curv.calc(left_pixels, right_pixels)
     print(l, 'm', r, 'm')
-     
-     
     
-    
-    
-    
-    
-    
+    marker = LaneMarker(warper)
+    marker.run(undist_img, fitter._left_fit, fitter._right_fit)
     
     
 
