@@ -96,7 +96,7 @@ class LaneCurveFit(object):
     def __init__(self):
         pass
 
-    def run(self, lane_map, left_lane_inds, right_lane_inds, nonzerox, nonzeroy):
+    def run(self, left_lane_inds, right_lane_inds, nonzerox, nonzeroy):
         """
         # Args
             lane_map : array
@@ -108,8 +108,6 @@ class LaneCurveFit(object):
             minpix : int
                 minimum number of pixels found to recenter window
         """
-        self._lane_map = lane_map
-        
         # 4. Fit curve
         left_fit, right_fit = self._fit_curve(left_lane_inds, right_lane_inds, nonzerox, nonzeroy)
         
@@ -243,8 +241,10 @@ if __name__ == "__main__":
     win = SlidingWindow()
     out_img, left_lane_inds, right_lane_inds, nonzerox, nonzeroy = win.run(lane_map_ipt)
     
+    print(left_lane_inds.shape, right_lane_inds.shape, nonzerox.shape, nonzeroy.shape)
+    
     fitter = LaneCurveFit()
-    fitter.run(lane_map_ipt, left_lane_inds, right_lane_inds, nonzerox, nonzeroy)
+    fitter.run(left_lane_inds, right_lane_inds, nonzerox, nonzeroy)
     fitter.calc_curvature()
     fitter.plot(out_img)
     draw_lane_area(img, fitter, warper._Minv, corrector)
