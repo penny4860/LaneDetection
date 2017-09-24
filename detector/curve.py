@@ -2,10 +2,7 @@
 
 import matplotlib.pyplot as plt
 from detector.cal import DistortionCorrector
-from detector.warp import PerspectTrans
 import cv2
-from detector.lane import LanePixelDetector
-from detector.binary import SchannelBin
 from detector.imutils import closing
 
 # test5.jpg
@@ -236,15 +233,31 @@ if __name__ == "__main__":
     # 1. Get bird eye's view lane map
     img = plt.imread('../test_images/straight_lines1.jpg')
     img = plt.imread('../test_images/test6.jpg')
-    
 
-    lane_map_ipt = run_framework(img)
+    corrector = DistortionCorrector.from_pkl("..//dataset//distortion_corrector.pkl")
+
+    # lane_map_ipt = run_framework(img)
+    from detector.lane.lane import LaneDetector
+    from detector.lane.edge import CannyEdgeExtractor
+    from detector.lane.mask import LaneImageMask
+    from detector.lane.binary import SchannelBin
+    _edge_detector = CannyEdgeExtractor(50, 200)
+    _binary_extractor = SchannelBin((48, 255))
+    _image_mask = LaneImageMask()
+    detector = LaneDetector(_edge_detector, _binary_extractor, _image_mask)
+
+    undist_img = corrector.run(img)
+    lane_map = detector.run(undist_img)
+    
+    from detector.curve.warp import LaneWarper
+    warper = LaneWarper()
+    lane_map_ipt = warper.forward(lane_map)
+    
     fitter = LaneCurveFit()
     out_img = fitter.run(lane_map_ipt)
     fitter.calc_curvature()
     fitter.plot(out_img)
-    
-    draw_lane_area(img, fitter, PerspectTrans.from_pkl('../dataset/perspective_trans.pkl')._Minv)
+    draw_lane_area(img, fitter, warper._Minv)
     
     
     
