@@ -81,7 +81,7 @@ class DistortionCorrector(object):
     def from_pkl(cls, filename=None):
         # load predefined distortion correction instance        
         if filename is None:
-            filename = os.path.join(os.path.dirname(__file__), "models", "dist_corrector")
+            filename = os.path.join(os.path.dirname(__file__), "models", "dist_corrector.pkl")
         
         with open(filename, 'rb') as f:
             instance = pickle.load(f)
