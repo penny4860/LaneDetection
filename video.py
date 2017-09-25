@@ -1,26 +1,21 @@
 # -*- coding: utf-8 -*-
+import imageio
+imageio.plugins.ffmpeg.download()
 
-import cv2
-import matplotlib.pyplot as plt
 
-def video_to_image(mp4_file='project_video.mp4'):
-    vidcap = cv2.VideoCapture(mp4_file)
-    
-    while True:
-        success, image = vidcap.read()
-        if success:
-            image = cv2.cvtColor(image, cv2.COLOR_BGR2RGB)
-            yield image
-        else:
-            break
+# Import everything needed to edit/save/watch video clips
+from moviepy.editor import VideoFileClip
+from detector.framework import ImageFramework
 
-video = cv2.VideoWriter('output.avi',cv2.VideoWriter_fourcc(*'XVID'), 20.0, (1280,720))
+def process_image(image):
+    img_framework = ImageFramework()
+    return img_framework.run(image)
+ 
+white_output = 'project_video_result.mp4'
+clip1 = VideoFileClip("project_video.mp4")
+white_clip = clip1.fl_image(process_image) #NOTE: this function expects color images!!
+white_clip.write_videofile(white_output, audio=False)
 
-images = []
-for i, img in enumerate(video_to_image('project_video.mp4')):
-    # process lane finding
-    # save images
-    video.write(img)
-video.release()
-cv2.destroyAllWindows()
+
+
 
