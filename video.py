@@ -12,7 +12,7 @@ def process_image(image):
     return img_framework.run(image)
  
 white_output = 'project_video_result.mp4'
-clip1 = VideoFileClip("project_video.mp4").subclip(0, 10)
+clip1 = VideoFileClip("project_video.mp4").subclip(0, 3)
 white_clip = clip1.fl_image(process_image) #NOTE: this function expects color images!!
 white_clip.write_videofile(white_output, audio=False)
 
