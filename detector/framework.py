@@ -100,20 +100,36 @@ class _LaneFramework(object):
         lane_marked_img = marker.run(image, self._fitter._left_fit, self._fitter._right_fit)
         return lane_marked_img
         
-# class VideoFramework(_LaneFramework):
-#     
-#     def __init__(self):
-#         self._lane_pixels = None
-# 
-#     def run(self, image):
-#         # ploty / left_fitx / right_fitx
-#         import numpy as np
-#         roi = np.zeros((image.shape[0], image.shape[1]))
-#         roi[ploty[:, 1], left_fitx[:, 0]] = 255
-#         roi[ploty[:, 1], right_fitx[:, 0]] = 255
-# 
-#         
-#         pass
+class VideoFramework(_LaneFramework):
+     
+    def __init__(self):
+        self._is_detected = False
+ 
+    def run(self, image):
+        # 1. distortion correction
+        undist_img = self._corrector.run(image)
+        
+        # 2. extract lane map
+        lane_map = self._extract_lane_map(undist_img)
+        
+        if self._is_detected:
+            roi = self._get_roi(lane_map)
+            lane_map[roi == 0] = 0
+        
+        lane_marked_img = self._fit_lane_curve(undist_img, lane_map)
+        self._is_detected = True
+        return lane_marked_img
+
+    def _get_roi(self, image):
+        import numpy as np
+        ploty = np.linspace(0, image.shape[0]-1, image.shape[0] )
+        left_fitx = self._fitter._left_fit[0]*ploty**2 + self._fitter._left_fit[1]*ploty + self._fitter._left_fit[2]
+        right_fitx = self._fitter._right_fit[0]*ploty**2 + self._fitter._right_fit[1]*ploty + self._fitter._right_fit[2]
+
+        roi = np.zeros((image.shape[0], image.shape[1]))
+        roi[ploty[:, 1], left_fitx[:, 0]] = 255
+        roi[ploty[:, 1], right_fitx[:, 0]] = 255
+        return roi
 
 class ImageFramework(_LaneFramework):
     pass
