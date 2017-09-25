@@ -11,7 +11,7 @@ from detector.curve.curv import Curvature
 from detector.curve.fit import LaneCurveFit, SlidingWindow
 
 
-class ImageFramework(object):
+class _LaneFramework(object):
     """
     # Args
         corrector
@@ -62,7 +62,14 @@ class ImageFramework(object):
         """
         # 1. distortion correction
         undist_img = self._corrector.run(image)
+        
+        # 2. extract lane map
+        lane_map = self._extract_lane_map(undist_img)
+        lane_marked_img = self._fit_lane_curve(undist_img, lane_map)
+        
+        return lane_marked_img
 
+    def _extract_lane_map(self, image):
         # 2. edge detection
         edge_map = self._edge_detector.run(image)
 
@@ -73,7 +80,9 @@ class ImageFramework(object):
         # 4. Get lane map
         r_dist_map, l_dist_map = self._edge_dist_calc.run(edge_map, binary_roi)
         lane_map = self._mid_edge_calc.run(r_dist_map, l_dist_map)
-        
+        return lane_map
+
+    def _fit_lane_curve(self, image, lane_map):
         # 5. Do perspective transform to make bird eyes view image
         lane_map_ipt = self._warper.forward(lane_map)
 
@@ -88,11 +97,27 @@ class ImageFramework(object):
 
         # 9. Mark lane area in original image        
         marker = LaneMarker(self._warper)
-        lane_marked_img = marker.run(undist_img, self._fitter._left_fit, self._fitter._right_fit)
+        lane_marked_img = marker.run(image, self._fitter._left_fit, self._fitter._right_fit)
         return lane_marked_img
+        
+# class VideoFramework(_LaneFramework):
+#     
+#     def __init__(self):
+#         self._lane_pixels = None
+# 
+#     def run(self, image):
+#         # ploty / left_fitx / right_fitx
+#         import numpy as np
+#         roi = np.zeros((image.shape[0], image.shape[1]))
+#         roi[ploty[:, 1], left_fitx[:, 0]] = 255
+#         roi[ploty[:, 1], right_fitx[:, 0]] = 255
+# 
+#         
+#         pass
 
-    def _show_process(self):
-        pass
+class ImageFramework(_LaneFramework):
+    pass
+
 
 
 if __name__ == "__main__":
