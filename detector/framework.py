@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+import cv2
 from detector.cal import DistortionCorrector
 
 from detector.lane.edge import CannyEdgeExtractor, EdgeDistanceCalculator, MidTwoEdges
@@ -65,7 +66,7 @@ class _LaneFramework(object):
         
         # 2. extract lane map
         lane_map = self._extract_lane_map(undist_img)
-        lane_marked_img = self._fit_lane_curve(undist_img, lane_map)
+        lane_marked_img, _ = self._fit_lane_curve(undist_img, lane_map)
         
         return lane_marked_img
 
@@ -95,15 +96,16 @@ class _LaneFramework(object):
         # 8. Calc curvature in meter unit         
         self.curvature = self._curv.calc(left_pixels, right_pixels)
 
-        # 9. Mark lane area in original image        
+        # 9. Mark lane area in original image
         marker = LaneMarker(self._warper)
         lane_marked_img = marker.run(image, self._fitter._left_fit, self._fitter._right_fit)
-        return lane_marked_img
+        line_img = marker.get_lane_line_map(image)
+        return lane_marked_img, line_img
         
 class VideoFramework(_LaneFramework):
      
     def __init__(self):
-        self._is_detected = False
+        self.roi = None
         super(VideoFramework, self).__init__()
  
     def run(self, image):
@@ -112,25 +114,19 @@ class VideoFramework(_LaneFramework):
         
         # 2. extract lane map
         lane_map = self._extract_lane_map(undist_img)
+        if self.roi is not None:
+            lane_map[self.roi == 0] = 0
         
-        if self._is_detected:
-            roi = self._get_roi(lane_map)
-            lane_map[roi == 0] = 0
+        lane_marked_img, lane_line_map = self._fit_lane_curve(undist_img, lane_map)
+        self._set_roi(lane_line_map)
         
-        lane_marked_img = self._fit_lane_curve(undist_img, lane_map)
-        self._is_detected = True
         return lane_marked_img
 
-    def _get_roi(self, image):
+    def _set_roi(self, lane_line_map):
         import numpy as np
-        ploty = np.linspace(0, image.shape[0]-1, image.shape[0] )
-        left_fitx = self._fitter._left_fit[0]*ploty**2 + self._fitter._left_fit[1]*ploty + self._fitter._left_fit[2]
-        right_fitx = self._fitter._right_fit[0]*ploty**2 + self._fitter._right_fit[1]*ploty + self._fitter._right_fit[2]
+        kernel = np.ones((5,50), np.uint8)
+        self.roi = cv2.dilate(lane_line_map,kernel,iterations = 1)
 
-        roi = np.zeros_like(image)
-        roi[ploty, left_fitx] = 255
-        roi[ploty, right_fitx] = 255
-        return roi
 
 class ImageFramework(_LaneFramework):
     pass
