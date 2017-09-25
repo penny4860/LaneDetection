@@ -94,7 +94,7 @@ class LaneMarker(object):
 
     def get_lane_line_map(self, image):
         line_map = np.zeros((image.shape[0], image.shape[1])).astype(np.uint8)
-        if np.any(self.left_pixels < 0):
+        if np.any(self.left_pixels[:, 1] < 0) or np.any(self.left_pixels[:, 1] > image.shape[1]):
             return None
         
         line_map[self.left_pixels[:, 1], self.left_pixels[:, 0]] = 255
