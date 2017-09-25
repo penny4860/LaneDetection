@@ -119,13 +119,15 @@ class VideoFramework(_LaneFramework):
         
         lane_marked_img, lane_line_map = self._fit_lane_curve(undist_img, lane_map)
         self._set_roi(lane_line_map)
-        
         return lane_marked_img
 
     def _set_roi(self, lane_line_map):
         import numpy as np
-        kernel = np.ones((5,50), np.uint8)
-        self.roi = cv2.dilate(lane_line_map,kernel,iterations = 1)
+        if lane_line_map is None:
+            self.roi = None
+        else:
+            kernel = np.ones((5,50), np.uint8)
+            self.roi = cv2.dilate(lane_line_map,kernel,iterations = 1)
 
 
 class ImageFramework(_LaneFramework):
