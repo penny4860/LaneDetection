@@ -104,6 +104,7 @@ class VideoFramework(_LaneFramework):
      
     def __init__(self):
         self._is_detected = False
+        super(VideoFramework, self).__init__()
  
     def run(self, image):
         # 1. distortion correction
@@ -126,9 +127,9 @@ class VideoFramework(_LaneFramework):
         left_fitx = self._fitter._left_fit[0]*ploty**2 + self._fitter._left_fit[1]*ploty + self._fitter._left_fit[2]
         right_fitx = self._fitter._right_fit[0]*ploty**2 + self._fitter._right_fit[1]*ploty + self._fitter._right_fit[2]
 
-        roi = np.zeros((image.shape[0], image.shape[1]))
-        roi[ploty[:, 1], left_fitx[:, 0]] = 255
-        roi[ploty[:, 1], right_fitx[:, 0]] = 255
+        roi = np.zeros_like(image)
+        roi[ploty, left_fitx] = 255
+        roi[ploty, right_fitx] = 255
         return roi
 
 class ImageFramework(_LaneFramework):
