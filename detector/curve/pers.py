@@ -76,6 +76,11 @@ class LaneMarker(object):
     
         # Combine the result with the original image
         result = cv2.addWeighted(image, 1, newwarp, 0.3, 0)
+
+        # Todo : return
+        self.right_pixels = np.array(right_fitx, ploty).astype(int).T
+        self.left_pixels = np.array(left_fitx, ploty).astype(int).T
+        
         if plot:
             plt.imshow(result)
             plt.show()
@@ -87,6 +92,12 @@ class LaneMarker(object):
         right_xs = right_curve[0]*ys**2 + right_curve[1]*ys + right_curve[2]
         return ys, left_xs, right_xs
 
+    def get_lane_line_map(self, image):
+        line_map = np.zeros((image.shape[0], image.shape[1])).astype(np.uint8)
+        line_map[self.left_pixels[:, 1], self.left_pixels[:, 0]] = 255
+        line_map[self.right_pixels[:, 1], self.right_pixels[:, 0]] = 255
+        line_map = self._warper.backward(line_map)
+        return line_map
 
 if __name__ == "__main__":
     import matplotlib.pyplot as plt
