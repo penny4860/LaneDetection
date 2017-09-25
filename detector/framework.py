@@ -10,6 +10,7 @@ from detector.curve.pers import LaneWarper, LaneMarker
 from detector.curve.curv import Curvature
 from detector.curve.fit import LaneCurveFit, SlidingWindow
 
+
 class ImageFramework(object):
     """
     # Args
