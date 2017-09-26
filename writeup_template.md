@@ -47,16 +47,16 @@ You're reading it!
 
 #### 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
 
-저는 checkerboard images 를 사용해서 camera matrix를 구하는 과정을 [cal.py](detector/cal.py)에 구현하였습니다. 
+I implemented checkerboard images to get the camera matrix in [cal.py] (detector / cal.py).
 
-* checkerboard images의 corner point를 구해서 이를 2d image plane 에서의 좌표로 저장한다. : ```DistortionCorrector._get_img_points()```
-* 2d image plane 에서의 좌표에 대응하는 3d world coordinate 좌표를 구한다. : ```DistortionCorrector._get_obj_points()```
-* 2d image plane 에서의 좌표들과 3d world coordinate에서의 좌표들을 class member 변수로 저장한다.
-* distortion correction 이 필요한 image가 입력되었을 때 위에서 구한 좌표들을 이용해서 camera matrix를 구하고 input image 에 대해서 distortion을 보정한다. : ```DistortionCorrector.run()```
+* Obtain the corner point of the checkerboard images and save it as coordinates in the 2d image plane. : `` `DistortionCorrector._get_img_points ()` `
+* 2d Obtain the world world coordinate corresponding to the coordinates in the image plane. : `` `DistortionCorrector._get_obj_points ()` `
+* 2d Save the coordinates in the image plane and the coordinates in 3d world coordinate as class member variables.
+* When an image requiring distortion correction is input, use the coordinates obtained above to obtain the camera matrix and correct the distortion for the input image. : `` `DistortionCorrec
 
 ![alt text][cal]
 
-위 그림은 distortion correction을 test한 결과입니다. [cal.py](detector/cal.py)를 실행하면 결과를 볼 수 있습니다.
+The above figure is the result of distortion correction test. Run [cal.py] (detector / cal.py) to see the results.
 
 
 ### Pipeline (single images)
@@ -68,13 +68,13 @@ To demonstrate this step, I will describe how I apply the distortion correction 
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
-저는 s-channel intensity의 thresholing 과 edge image를 조합해서 사용했습니다.
+I used a combination of s-channel intensity thresholing and edge image.
 
 ![alt text][bin]
 
-* 위 figure의 가운데 그림처럼 intensity 에 의한 binary image 와 canny edge detector를 이용한 edge map을 따로 구합니다.
-* binay image 에서의 active pixel 에 대해서 왼쪽과 오른쪽 방향의 비슷한 거리에 edge pixel이 있는 경우만 lane pixel로 검출합니다. 이러한 과정을 통해 아래의 그림과 같이 그림자를 lane pixel로 오인식하는 경우를 최소화 할 수 있습니다.
-	* binary image 와 edge map을 이용해서 lane pixel을 검출하는 과정은 [framework.py](detector/lane/framework.py) 에 구현되어있습니다.
+* Obtain binary image by intensity and edge map using canny edge detector separately, as shown in the middle of the figure above.
+* It detects lane pixels only when there is an edge pixel in the left and right direction for the active pixel in binay image. Through this process, it is possible to minimize the misunderstanding of the shadow as lane pixel as shown below.
+	* The process of detecting lane pixels using binary image and edge map is implemented in [framework.py] (detector / lane / framework.py).
 
 ![alt text][bin_seg]
 
@@ -82,7 +82,7 @@ To demonstrate this step, I will describe how I apply the distortion correction 
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
-저는 아래의 code와 같이 source points와 destination points를 manual로 정하였습니다.
+I have manually set the source and destination points as in the code below.
 
 ```python
 src_points = np.array([(250, 700), (1075, 700), (600, 450), (685, 450)]).astype(np.float32)
@@ -112,18 +112,18 @@ I verified that my perspective transform was working as expected by drawing the 
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-저는 Sliding window로 polynomial fitting에 사용한 lane pixel을 고른고 second order polynimal fitting을 수행하였습니다.
+I selected the lane pixel used for the polynomial fitting in the sliding window and performed the second order polynomial fitting.
 
 ![alt text][fit]
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-저는 meter 단위의 radius of curvature를 구하는 과정을 `curv.py`의 ```Curvature class```에서 구현하였습니다.
+I implemented the process of finding the radius of curvature in the curv.py `` Curvature class``.
 
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-fitting된 lane curve를 original image의 perspective로 변환해서 lane area를 표시하는 과정은 [pers.py](detector/curve/pers.py)의 ```LaneMarker class```에 구현하였습니다.
+The process of converting a fitted lane curve into a perspective of the original image and displaying the lane area is implemented in the `` LaneMarker class` of [pers.py] (detector / curve / pers.py).
 
 
 ![alt text][marked]
@@ -142,27 +142,24 @@ Here's a [link to my video result](./project_video_result.mp4)
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-저는 이번 프로젝트에서 lane area를 detect하는 알고리즘을 구현하였습니다. 제가 가장 시간을 많이 들여서 연구했던 것은 original perspective view에서 lane pixel을 detect 하는 부분입니다. 특히 그림자가 섞여있는 image 에서는 gradient 와 intensity thresholding 만으로는 lane pixel만 추출하는 것이 어려웠습니다. 
+I implemented an algorithm to detect the lane area in this project. The most time-consuming research I have done is to detect lane pixels in the original perspective view. Especially, in the image with mixed shadows, it was difficult to extract only the lane pixels by gradient and intensity thresholding.
 
 ![alt text][pipeline]
 
-그래서 위 pipeline에서 처럼 binary image와 edge map을 각각 따로 구하고, combine 하는 방식을 생각하게 되었습니다.
+So I decided to combine both binary images and edge maps separately, as in the above pipeline.
 
 ![alt text][pipeline3]
 (blue : bright pixel, red : edge pixel)
 
-위 그림에서 처럼 bright pixel 의 수평선상에서 양쪽 방향에 edge가 있는 pixel만을 lane pixel로 detection 합니다. 이렇게 하면 그림자에 의한 오인식을 최소화 할 수 있습니다.
+As shown in the figure above, only pixels with edges in both directions on the horizon line of bright pixels are detected as lane pixels. This will minimize shadowing mistakes.
 
 ![alt text][pipeline2]
 
-그러나 이 방식을 통해서도 나무가 많은 영상이나 그림자가 있는 영상에서는 인식결과가 좋지 못했습니다. 제가 생각한 개선 아이디어는 다음과 같습니다.
+However, even with this method, recognition results were not good in trees with many images or images with shadows. Here are my ideas for improvement.
 
-* Time series 정보를 활용하는 방식
-  * 이전 영상에서의 인식결과를 현재 frame에서의 예측에 반영하는 방법입니다.
-* lane curve를 fitting 할 때 좌, 우 lane이 parallel 하다는 prior knowledge를 사용하는 방식
-* machine learning 알고리즘을 활용하는 방식
-  * 다만, 이 방식은 lane pixel에 대해서 labeling 되어있는 dataset이 필요합니다.
-
-
-
+* How to use time series information
+	* This method reflects the recognition result from the previous image to the prediction in the current frame.
+* Using prior knowledge that the left and right lanes are parallel when fitting the lane curve
+* How to use machine learning algorithm
+	* However, this method requires a dataset labeled for lane pixels.
 
