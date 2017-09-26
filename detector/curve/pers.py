@@ -72,8 +72,9 @@ class LaneWarper(Warper):
 
 
 class LaneMarker(object):
-    def __init__(self, warper):
+    def __init__(self, warper, curvature):
         self._warper = warper
+        self._curvature = curvature
     
     def run(self, image, left_fit, right_fit, plot=False):
         """
@@ -93,9 +94,13 @@ class LaneMarker(object):
         
         # Warp the blank back to original image space using inverse perspective matrix (Minv)
         newwarp = self._warper.backward(color_warp)
-    
+        
         # Combine the result with the original image
         result = cv2.addWeighted(image, 1, newwarp, 0.3, 0)
+
+        offset = self._get_vehicle_offset(newwarp)
+        self._create_image(result, offset)
+        
         if plot:
             plt.imshow(result)
             plt.show()
@@ -106,6 +111,36 @@ class LaneMarker(object):
         left_xs = left_curve[0]*ys**2 + left_curve[1]*ys + left_curve[2]
         right_xs = right_curve[0]*ys**2 + right_curve[1]*ys + right_curve[2]
         return ys, left_xs, right_xs
+
+    def _get_vehicle_offset(self, new_warp):
+        array = new_warp[-1,:,1]
+        bottom_x_left = np.where(array != 0)[0][0]
+        bottom_x_right = np.where(array != 0)[0][-1]
+        
+        vehicle_offset = (bottom_x_left + bottom_x_right)/2 - new_warp.shape[1]/2
+        # Convert pixel offset to meters
+        xm_per_pix = 3.7/700 # meters per pixel in x dimension
+
+        print(bottom_x_left, bottom_x_right, vehicle_offset, vehicle_offset * xm_per_pix)
+
+        vehicle_offset *= xm_per_pix
+        
+        return vehicle_offset
+
+    def _create_image(self, result, vehicle_offset):
+        left_curv, right_curv = self._curvature
+         
+        # Annotate lane curvature values and vehicle offset from center
+        avg_curve = (left_curv + right_curv)/2
+        curv_str = 'Radius of curvature: {:.1f}m'.format(avg_curve)
+        result = cv2.putText(result, curv_str, (30,40), 0, 1, (255,255,255), 2, cv2.LINE_AA)
+        
+        if vehicle_offset > 0:
+            offset_str = 'Vehicle is {:.2f}m right of lane center'.format(vehicle_offset)
+        else:
+            offset_str = 'Vehicle is {:.2f}m left of lane center'.format(-1*vehicle_offset)
+        result = cv2.putText(result, offset_str, (30,70), 0, 1, (255,255,255), 2, cv2.LINE_AA)
+        return result
 
 
 if __name__ == "__main__":
