@@ -87,7 +87,7 @@ class ImageFramework(object):
         self.curvature = self._curv.calc(left_pixels, right_pixels)
 
         # 9. Mark lane area in original image        
-        marker = LaneMarker(self._warper)
+        marker = LaneMarker(self._warper, self.curvature)
         lane_marked_img = marker.run(undist_img, self._fitter._left_fit, self._fitter._right_fit)
         return lane_marked_img
 
