@@ -26,7 +26,10 @@ The goals / steps of this project are the following:
 [pers]: ./output_images/pers.png "pers"
 [fit]: ./output_images/fit.png "fit"
 [marked]: ./output_images/lane_marked.png "marked"
-[video]: ./project_video_result.mp4 "Video"
+[pipeline]: ./output_images/pipeline.png "pipeline"
+[pipeline2]: ./output_images/pipeline2.png "pipeline2"
+[pipeline3]: ./output_images/pipeline3.png "pipeline3"
+
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
 
@@ -139,8 +142,26 @@ Here's a [link to my video result](./project_video_result.mp4)
 
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
-Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+저는 이번 프로젝트에서 lane area를 detect하는 알고리즘을 구현하였습니다. 제가 가장 시간을 많이 들여서 연구했던 것은 original perspective view에서 lane pixel을 detect 하는 부분입니다. 특히 그림자가 섞여있는 image 에서는 gradient 와 intensity thresholding 만으로는 lane pixel만 추출하는 것이 어려웠습니다. 
 
+![alt text][pipeline]
+
+그래서 위 pipeline에서 처럼 binary image와 edge map을 각각 따로 구하고, combine 하는 방식을 생각하게 되었습니다.
+
+![alt text][pipeline3]
+(blue : bright pixel, red : edge pixel)
+
+위 그림에서 처럼 bright pixel 의 수평선상에서 양쪽 방향에 edge가 있는 pixel만을 lane pixel로 detection 합니다. 이렇게 하면 그림자에 의한 오인식을 최소화 할 수 있습니다.
+
+![alt text][pipeline2]
+
+그러나 이 방식을 통해서도 나무가 많은 영상이나 그림자가 있는 영상에서는 인식결과가 좋지 못했습니다. 제가 생각한 개선 아이디어는 다음과 같습니다.
+
+* Time series 정보를 활용하는 방식
+  * 이전 영상에서의 인식결과를 현재 frame에서의 예측에 반영하는 방법입니다.
+* lane curve를 fitting 할 때 좌, 우 lane이 parallel 하다는 prior knowledge를 사용하는 방식
+* machine learning 알고리즘을 활용하는 방식
+  * 다만, 이 방식은 lane pixel에 대해서 labeling 되어있는 dataset이 필요합니다.
 
 
 
