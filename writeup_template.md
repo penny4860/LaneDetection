@@ -19,7 +19,7 @@ The goals / steps of this project are the following:
 
 [//]: # (Image References)
 
-[image1]: ./examples/undistort_output.png "Undistorted"
+[cal]: ./imgs/cal.png "cal"
 [image2]: ./test_images/test1.jpg "Road Transformed"
 [image3]: ./examples/binary_combo_example.jpg "Binary Example"
 [image4]: ./examples/warped_straight_lines.jpg "Warp Example"
@@ -43,13 +43,17 @@ You're reading it!
 
 #### 1. Briefly state how you computed the camera matrix and distortion coefficients. Provide an example of a distortion corrected calibration image.
 
-The code for this step is contained in the first code cell of the IPython notebook located in "./examples/example.ipynb" (or in lines # through # of the file called `some_file.py`).  
+저는 checkerboard images 를 사용해서 camera matrix를 구하는 과정을 [cal.py](detector/cal.py)에 구현하였습니다. 
 
-I start by preparing "object points", which will be the (x, y, z) coordinates of the chessboard corners in the world. Here I am assuming the chessboard is fixed on the (x, y) plane at z=0, such that the object points are the same for each calibration image.  Thus, `objp` is just a replicated array of coordinates, and `objpoints` will be appended with a copy of it every time I successfully detect all chessboard corners in a test image.  `imgpoints` will be appended with the (x, y) pixel position of each of the corners in the image plane with each successful chessboard detection.  
+* checkerboard images의 corner point를 구해서 이를 2d image plane 에서의 좌표로 저장한다. : ```DistortionCorrector._get_img_points()```
+* 2d image plane 에서의 좌표에 대응하는 3d world coordinate 좌표를 구한다. : ```DistortionCorrector._get_obj_points()```
+* 2d image plane 에서의 좌표들과 3d world coordinate에서의 좌표들을 class member 변수로 저장한다.
+* distortion correction 이 필요한 image가 입력되었을 때 위에서 구한 좌표들을 이용해서 camera matrix를 구하고 input image 에 대해서 distortion을 보정한다. : ```DistortionCorrector.run()```
 
-I then used the output `objpoints` and `imgpoints` to compute the camera calibration and distortion coefficients using the `cv2.calibrateCamera()` function.  I applied this distortion correction to the test image using the `cv2.undistort()` function and obtained this result: 
+![alt text][cal]
 
-![alt text][image1]
+위 그림은 distortion correction을 test한 결과입니다. [cal.py](detector/cal.py)를 실행하면 결과를 볼 수 있습니다.
+
 
 ### Pipeline (single images)
 
