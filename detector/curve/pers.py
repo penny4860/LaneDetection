@@ -19,10 +19,13 @@ class Warper(object):
         self._M = cv2.getPerspectiveTransform(self._src, self._dst)
         self._Minv = cv2.getPerspectiveTransform(self._dst, self._src)
     
-    def forward(self, image):
+    def forward(self, image, plot=False):
         """src to dst"""
         h, w = image.shape[:2]
         warped = cv2.warpPerspective(image, self._M, (w, h), flags=cv2.INTER_LINEAR)
+        
+        if plot:
+            self._show_process(image, warped)
         return warped
 
     def backward(self, image):
@@ -31,6 +34,23 @@ class Warper(object):
         warped = cv2.warpPerspective(image, self._Minv, (w, h), flags=cv2.INTER_LINEAR)
         return warped
 
+    def _show_process(self, original_image, transformed_image):
+        
+        img = original_image.copy()
+        for point in self._src:
+            cv2.circle(img, center=(point[0], point[1]), radius=5, thickness=20, color=(0,0,255))
+        
+        img_tr = transformed_image.copy()
+        for point in self._dst:
+            cv2.circle(img_tr, center=(point[0], point[1]), radius=5, thickness=20, color=(0,0,255))
+        
+        _, axes = plt.subplots(1, 2, figsize=(10,10))
+        for img, ax, text in zip([img, img_tr], axes, ["img", "bird eyes view"]):
+            ax.imshow(img, cmap="gray")
+            ax.set_title(text, fontsize=30)
+        plt.show()
+
+        
 
 class LaneWarper(Warper):
     """Perform perspective transform to make a image to bird eye's view"""
@@ -92,12 +112,13 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     warper = LaneWarper()
     img = plt.imread('..//..//test_images/straight_lines1.jpg')
-    img_bird = warper.forward(img)
-    original = warper.backward(img_bird)
+    img_bird = warper.forward(img, True)
+    
+    
 
-    _, axes = plt.subplots(1, 3, figsize=(10,10))
-    for img, ax, text in zip([img, img_bird, original], axes, ["img", "bird eyes view", "original"]):
-        ax.imshow(img, cmap="gray")
-        ax.set_title(text, fontsize=30)
-    plt.show()
+#     _, axes = plt.subplots(1, 3, figsize=(10,10))
+#     for img, ax, text in zip([img, img_bird], axes, ["img", "bird eyes view"]):
+#         ax.imshow(img, cmap="gray")
+#         ax.set_title(text, fontsize=30)
+#     plt.show()
 
