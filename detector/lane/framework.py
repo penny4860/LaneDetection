@@ -84,9 +84,15 @@ if __name__ == "__main__":
     # 1. Distortion Correction
     import glob
     files = glob.glob('..//..//test_images//*.jpg')
-    for filename in files[:-1]:
-        img = plt.imread(filename)
-        img = corrector.run(img)
-        
-        lane_map = detector.run(img, True)
+
+    img = plt.imread(files[0])
+    img2 = corrector.run(img)
+    
+    images = [img, img2]
+    _, axes = plt.subplots(1, 2, figsize=(10,10))
+    for img, ax, text in zip(images, axes, ["original", "distortion corrected"]):
+        ax.imshow(img, cmap="gray")
+        ax.set_title(text, fontsize=30)
+    plt.show()
+    # lane_map = detector.run(img, True)
 
