@@ -24,10 +24,9 @@ The goals / steps of this project are the following:
 [bin]: ./output_images/bin.png "bin"
 [bin_seg]: ./output_images/bin_seg.png "bin_seg"
 [pers]: ./output_images/pers.png "pers"
-
-[image5]: ./output_images/color_fit_lines.jpg "Fit Visual"
-[image6]: ./output_images/example_output.jpg "Output"
-[video1]: ./project_video.mp4 "Video"
+[fit]: ./output_images/fit.png "fit"
+[marked]: ./output_images/lane_marked.png "marked"
+[video]: ./project_video_result.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
 
@@ -110,19 +109,21 @@ I verified that my perspective transform was working as expected by drawing the 
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
-Then I did some other stuff and fit my lane lines with a 2nd order polynomial kinda like this:
+저는 Sliding window로 polynomial fitting에 사용한 lane pixel을 고른고 second order polynimal fitting을 수행하였습니다.
 
-![alt text][image5]
+![alt text][fit]
 
 #### 5. Describe how (and identify where in your code) you calculated the radius of curvature of the lane and the position of the vehicle with respect to center.
 
-I did this in lines # through # in my code in `my_other_file.py`
+저는 meter 단위의 radius of curvature를 구하는 과정을 `curv.py`의 ```Curvature class```에서 구현하였습니다.
+
 
 #### 6. Provide an example image of your result plotted back down onto the road such that the lane area is identified clearly.
 
-I implemented this step in lines # through # in my code in `yet_another_file.py` in the function `map_lane()`.  Here is an example of my result on a test image:
+fitting된 lane curve를 original image의 perspective로 변환해서 lane area를 표시하는 과정은 [pers.py](detector/curve/pers.py)의 ```LaneMarker class```에 구현하였습니다.
 
-![alt text][image6]
+
+![alt text][marked]
 
 ---
 
@@ -130,7 +131,7 @@ I implemented this step in lines # through # in my code in `yet_another_file.py`
 
 #### 1. Provide a link to your final video output.  Your pipeline should perform reasonably well on the entire project video (wobbly lines are ok but no catastrophic failures that would cause the car to drive off the road!).
 
-Here's a [link to my video result](./project_video.mp4)
+Here's a [link to my video result](./project_video_result.mp4)
 
 ---
 
@@ -139,3 +140,8 @@ Here's a [link to my video result](./project_video.mp4)
 #### 1. Briefly discuss any problems / issues you faced in your implementation of this project.  Where will your pipeline likely fail?  What could you do to make it more robust?
 
 Here I'll talk about the approach I took, what techniques I used, what worked and why, where the pipeline might fail and how I might improve it if I were going to pursue this project further.  
+
+
+
+
+
