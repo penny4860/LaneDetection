@@ -120,9 +120,6 @@ class LaneMarker(object):
         vehicle_offset = (bottom_x_left + bottom_x_right)/2 - new_warp.shape[1]/2
         # Convert pixel offset to meters
         xm_per_pix = 3.7/700 # meters per pixel in x dimension
-
-        print(bottom_x_left, bottom_x_right, vehicle_offset, vehicle_offset * xm_per_pix)
-
         vehicle_offset *= xm_per_pix
         
         return vehicle_offset
