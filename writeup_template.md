@@ -20,11 +20,13 @@ The goals / steps of this project are the following:
 [//]: # (Image References)
 
 [cal]: ./output_images/cal.png "cal"
-[image2]: ./test_images/test1.jpg "Road Transformed"
-[image3]: ./examples/binary_combo_example.jpg "Binary Example"
-[image4]: ./examples/warped_straight_lines.jpg "Warp Example"
-[image5]: ./examples/color_fit_lines.jpg "Fit Visual"
-[image6]: ./examples/example_output.jpg "Output"
+[undist]: ./output_images/undist.png "undist"
+[bin]: ./output_images/bin.png "bin"
+[bin_seg]: ./output_images/bin_seg.png "bin_seg"
+[pers]: ./output_images/pers.png "pers"
+
+[image5]: ./output_images/color_fit_lines.jpg "Fit Visual"
+[image6]: ./output_images/example_output.jpg "Output"
 [video1]: ./project_video.mp4 "Video"
 
 ## [Rubric](https://review.udacity.com/#!/rubrics/571/view) Points
@@ -60,43 +62,51 @@ You're reading it!
 #### 1. Provide an example of a distortion-corrected image.
 
 To demonstrate this step, I will describe how I apply the distortion correction to one of the test images like this one:
-![alt text][image2]
+![alt text][undist]
 
 #### 2. Describe how (and identify where in your code) you used color transforms, gradients or other methods to create a thresholded binary image.  Provide an example of a binary image result.
 
-I used a combination of color and gradient thresholds to generate a binary image (thresholding steps at lines # through # in `another_file.py`).  Here's an example of my output for this step.  (note: this is not actually from one of the test images)
+저는 s-channel intensity의 thresholing 과 edge image를 조합해서 사용했습니다.
 
-![alt text][image3]
+![alt text][bin]
+
+* 위 figure의 가운데 그림처럼 intensity 에 의한 binary image 와 canny edge detector를 이용한 edge map을 따로 구합니다.
+* binay image 에서의 active pixel 에 대해서 왼쪽과 오른쪽 방향의 비슷한 거리에 edge pixel이 있는 경우만 lane pixel로 검출합니다. 이러한 과정을 통해 아래의 그림과 같이 그림자를 lane pixel로 오인식하는 경우를 최소화 할 수 있습니다.
+	* binary image 와 edge map을 이용해서 lane pixel을 검출하는 과정은 [framework.py](detector/lane/framework.py) 에 구현되어있습니다.
+
+![alt text][bin_seg]
+
+
 
 #### 3. Describe how (and identify where in your code) you performed a perspective transform and provide an example of a transformed image.
 
-The code for my perspective transform includes a function called `warper()`, which appears in lines 1 through 8 in the file `example.py` (output_images/examples/example.py) (or, for example, in the 3rd code cell of the IPython notebook).  The `warper()` function takes as inputs an image (`img`), as well as source (`src`) and destination (`dst`) points.  I chose the hardcode the source and destination points in the following manner:
+저는 아래의 code와 같이 source points와 destination points를 manual로 정하였습니다.
 
 ```python
-src = np.float32(
-    [[(img_size[0] / 2) - 55, img_size[1] / 2 + 100],
-    [((img_size[0] / 6) - 10), img_size[1]],
-    [(img_size[0] * 5 / 6) + 60, img_size[1]],
-    [(img_size[0] / 2 + 55), img_size[1] / 2 + 100]])
-dst = np.float32(
-    [[(img_size[0] / 4), 0],
-    [(img_size[0] / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), img_size[1]],
-    [(img_size[0] * 3 / 4), 0]])
+src_points = np.array([(250, 700), (1075, 700), (600, 450), (685, 450)]).astype(np.float32)
+
+w, h = dst_size
+x_offset = 300
+y_offset = 50
+dst_points = np.array([(x_offset, h-y_offset),
+                       (w-x_offset, h-y_offset),
+                       (x_offset, y_offset),
+                       (w-x_offset, y_offset)]).astype(np.float32)
+
 ```
 
 This resulted in the following source and destination points:
 
 | Source        | Destination   | 
 |:-------------:|:-------------:| 
-| 585, 460      | 320, 0        | 
-| 203, 720      | 320, 720      |
-| 1127, 720     | 960, 720      |
-| 695, 460      | 960, 0        |
+| 250, 700      | 300, 710      | 
+| 1075, 700     | 980, 710      |
+| 600, 450      | 300, 50       |
+| 685, 450      | 980, 50       |
 
 I verified that my perspective transform was working as expected by drawing the `src` and `dst` points onto a test image and its warped counterpart to verify that the lines appear parallel in the warped image.
 
-![alt text][image4]
+![alt text][pers]
 
 #### 4. Describe how (and identify where in your code) you identified lane-line pixels and fit their positions with a polynomial?
 
